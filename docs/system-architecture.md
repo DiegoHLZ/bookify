@@ -55,6 +55,8 @@ Bookify is composed of three main layers:
         v
 [ PostgreSQL Database ]
 
+```
+
 ---
 
 ## Main Components
