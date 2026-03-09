@@ -1,50 +1,54 @@
 # Bookify
 
-Bookify es una plataforma SaaS de gestión de reservas diseñada para negocios de servicios como barberías, consultorios, centros deportivos, salones de belleza o coworkings.
+Bookify is a SaaS booking platform designed for service-based businesses such as barbershops, medical clinics, sports centers, beauty salons and coworking spaces.
 
-La plataforma permite que los negocios administren sus servicios, horarios disponibles y reservas desde un panel administrativo centralizado, mientras que los clientes pueden consultar disponibilidad y reservar servicios de manera rápida y sencilla.
+The platform allows businesses to manage their services, available schedules and reservations from a centralized administrative panel, while clients can easily browse services and book appointments.
 
-## Objetivo del proyecto
+## Project Objective
 
-El objetivo de Bookify es desarrollar una plataforma escalable y modular que permita a múltiples negocios gestionar sus reservas de manera eficiente mediante una arquitectura moderna basada en:
+The objective of Bookify is to build a scalable and modular booking platform that enables multiple businesses to manage their reservations efficiently using a modern architecture based on:
 
-- Angular para el frontend
-- Spring Boot para el backend
-- PostgreSQL como base de datos
-- JWT para autenticación
-- Docker para despliegue
+- Angular for the frontend
+- Spring Boot for the backend
+- PostgreSQL as the database
+- JWT for authentication
+- Docker for deployment
 
-## Tipo de sistema
+## System Type
 
-Bookify es una aplicación **SaaS (Software as a Service)** multi-negocio que permite que distintos negocios utilicen la misma plataforma para gestionar sus reservas.
+Bookify is a **multi-tenant SaaS application** that allows different businesses to use the same platform to manage their booking operations.
 
-Cada negocio tendrá su propio conjunto de:
+Each business manages its own:
 
-- servicios
-- horarios disponibles
-- reservas
-- clientes
+- services
+- availability schedules
+- bookings
+- customers
 
-## Usuarios del sistema
+## System Users
 
-### Administrador del negocio
+### Business Administrator
 
-Puede:
+The administrator is responsible for managing the business operations inside the platform.
 
-- gestionar servicios
-- configurar horarios disponibles
-- ver reservas
-- cambiar estados de reservas
-- visualizar métricas del negocio
+Capabilities include:
 
-### Cliente
+- managing services
+- configuring availability schedules
+- viewing bookings
+- updating booking status
+- monitoring business metrics
 
-Puede:
+### Client
 
-- registrarse
-- iniciar sesión
-- ver servicios disponibles
-- consultar horarios
-- reservar servicios
-- cancelar reservas
-- ver historial de reservas
+Clients are users who consume the services offered by the business.
+
+They can:
+
+- register
+- log in
+- view available services
+- check availability
+- book services
+- cancel bookings
+- view booking history
