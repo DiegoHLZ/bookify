@@ -42,20 +42,9 @@ Bookify is composed of three main layers:
 2. **Backend API**
 3. **Database Layer**
 
-### General Flow
+## System Architecture Diagram
 
-```text
-[ Angular Frontend ]
-        |
-        | HTTPS / REST API + JWT
-        v
-[ Spring Boot Backend ]
-        |
-        | JPA / Hibernate
-        v
-[ PostgreSQL Database ]
-
-```
+![Bookify System Architecture](./diagrams/system-architecture.drawio.png)
 
 ---
 
