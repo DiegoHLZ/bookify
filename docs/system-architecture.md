@@ -367,3 +367,17 @@ Bookify uses a modular monolithic architecture with Angular on the frontend, Spr
 The system is designed as a multi-tenant SaaS platform with logical tenant isolation, JWT-based authentication and slot-based booking control.
 
 This architecture provides a strong foundation for building a scalable, maintainable and production-ready booking platform.
+
+## Future AI Extension
+
+Bookify may incorporate an AI-powered semantic search system as a future enhancement.
+
+This feature would use embeddings and reranking models to allow users to discover services using natural language queries.
+
+Example queries include:
+
+- "football field tomorrow evening"
+- "haircut available today"
+- "quiet coworking space for two hours"
+
+The AI layer will remain optional and decoupled from the core reservation system to ensure that booking functionality remains reliable even if AI services are unavailable.
