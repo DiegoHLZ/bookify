@@ -218,6 +218,26 @@ Deliverables:
 
 ---
 
+## Phase 8 — AI Innovation
+
+Objective: enhance the platform with AI-powered service discovery using semantic search techniques.
+
+Tasks may include:
+
+- integrating embedding models
+- generating vector embeddings for services
+- implementing semantic search queries
+- implementing result reranking
+- improving service discovery through natural language queries
+
+Deliverables:
+
+- AI-powered semantic search prototype
+- vector-based service discovery
+- improved service relevance using reranking
+
+---
+
 ## Future Improvements
 
 Possible future improvements after the MVP include:
