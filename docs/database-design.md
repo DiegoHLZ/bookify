@@ -12,6 +12,12 @@ Tenant isolation is achieved through the use of a `business_id` reference in bus
 
 ---
 
+## Entity Relationship Diagram
+
+![Bookify ER Diagram](./diagrams/er-diagram.drawio.png)
+
+---
+
 ## Core Entities
 
 The main entities of the system are:
@@ -154,14 +160,14 @@ Possible booking statuses include:
 
 The system contains the following relationships:
 
-Business 1 → N Services  
-Business 1 → N AvailabilitySlots  
+Business 1 → N Service  
+Business 1 → N AvailabilitySlot  
 Business 1 → N Bookings  
 
-User 1 → N Bookings  
+User 1 → N Booking  
 
-Service 1 → N AvailabilitySlots  
-Service 1 → N Bookings  
+Service 1 → N AvailabilitySlot  
+Service 1 → N Booking  
 
 AvailabilitySlot 1 → 0..1 Booking
 
