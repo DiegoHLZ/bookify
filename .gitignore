@@ -1,0 +1,12 @@
+# Mac
+.DS_Store
+
+# Backups
+Frontend_backup/
+backend_backup/
+
+# IntelliJ
+.idea/
+
+# Java
+target/

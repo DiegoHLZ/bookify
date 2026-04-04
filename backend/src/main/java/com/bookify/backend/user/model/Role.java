@@ -1,4 +1,6 @@
 package com.bookify.backend.user.model;
 
-public class Role {
+public enum Role {
+    ADMIN,
+    CLIENT
 }
