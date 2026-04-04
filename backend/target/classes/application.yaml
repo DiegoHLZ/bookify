@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: bookify-backend
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bookify_db
+    username: diego
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
+
+jwt:
+  secret: 1234567890123456789012345678901234567890123456789012345678901234
+  expiration: 86400000
