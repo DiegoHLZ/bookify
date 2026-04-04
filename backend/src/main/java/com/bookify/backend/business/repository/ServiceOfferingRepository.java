@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface ServiceOfferingRepository extends JpaRepository<ServiceOffering, Long> {
 
-    List<ServiceOffering> findByBusinessId(Long businessId);
+    List<ServiceOffering> findByBusinessIdAndActiveTrue(Long businessId);
 
     Optional<ServiceOffering> findByIdAndBusinessId(Long id, Long businessId);
 }

@@ -40,7 +40,7 @@ public class ServiceOfferingService {
     }
 
     public List<ServiceResponse> getAllByBusiness(Long businessId) {
-        return serviceOfferingRepository.findByBusinessId(businessId)
+        return serviceOfferingRepository.findByBusinessIdAndActiveTrue(businessId)
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -71,7 +71,8 @@ public class ServiceOfferingService {
         ServiceOffering service = serviceOfferingRepository.findByIdAndBusinessId(serviceId, businessId)
                 .orElseThrow(() -> new RuntimeException("Service not found"));
 
-        serviceOfferingRepository.delete(service);
+        service.setActive(false);
+        serviceOfferingRepository.save(service);
     }
 
     private ServiceResponse toResponse(ServiceOffering service) {
