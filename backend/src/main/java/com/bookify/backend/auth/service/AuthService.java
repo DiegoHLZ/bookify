@@ -6,11 +6,14 @@ import com.bookify.backend.auth.dto.LoginResponse;
 import com.bookify.backend.auth.dto.RegisterRequest;
 import com.bookify.backend.business.model.Business;
 import com.bookify.backend.business.repository.BusinessRepository;
+import com.bookify.backend.common.exception.BadRequestException;
+import com.bookify.backend.common.exception.ResourceNotFoundException;
 import com.bookify.backend.user.model.Role;
 import com.bookify.backend.user.model.User;
 import com.bookify.backend.user.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 
 @Service
 public class AuthService {
@@ -32,11 +35,11 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered");
+            throw new BadRequestException("Email already registered");
         }
 
         Business business = businessRepository.findById(request.getBusinessId())
-                .orElseThrow(() -> new RuntimeException("Business not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Business not found"));
 
         User user = new User();
         user.setFirstName(request.getFirstName());
@@ -54,10 +57,10 @@ public class AuthService {
 
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+                .orElseThrow(() -> new BadRequestException("Invalid credentials"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new BadRequestException("Invalid credentials");
         }
 
         Long businessId = user.getBusiness() != null ? user.getBusiness().getId() : null;

@@ -7,6 +7,7 @@ import com.bookify.backend.business.model.Business;
 import com.bookify.backend.business.model.ServiceOffering;
 import com.bookify.backend.business.repository.BusinessRepository;
 import com.bookify.backend.business.repository.ServiceOfferingRepository;
+import com.bookify.backend.common.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,7 +26,7 @@ public class ServiceOfferingService {
 
     public ServiceResponse create(Long businessId, CreateServiceRequest request) {
         Business business = businessRepository.findById(businessId)
-                .orElseThrow(() -> new RuntimeException("Business not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Business not found"));
 
         ServiceOffering service = new ServiceOffering();
         service.setName(request.getName());
@@ -48,14 +49,14 @@ public class ServiceOfferingService {
 
     public ServiceResponse getById(Long businessId, Long serviceId) {
         ServiceOffering service = serviceOfferingRepository.findByIdAndBusinessId(serviceId, businessId)
-                .orElseThrow(() -> new RuntimeException("Service not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
 
         return toResponse(service);
     }
 
     public ServiceResponse update(Long businessId, Long serviceId, UpdateServiceRequest request) {
         ServiceOffering service = serviceOfferingRepository.findByIdAndBusinessId(serviceId, businessId)
-                .orElseThrow(() -> new RuntimeException("Service not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
 
         service.setName(request.getName());
         service.setDescription(request.getDescription());
