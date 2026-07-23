@@ -1,0 +1,143 @@
+erDiagram
+    USERS {
+        uuid id PK
+        citext email UK
+        string password_hash
+        string platform_role
+        string account_status
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    BUSINESSES {
+        uuid id PK
+        string name
+        string slug UK
+        string description
+        string status
+        decimal rating_average
+        int rating_count
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    BUSINESS_MEMBERSHIPS {
+        uuid id PK
+        uuid business_id FK
+        uuid user_id FK
+        string role
+        boolean is_active
+        timestamptz created_at
+    }
+    BUSINESS_LOCATIONS {
+        uuid id PK
+        uuid business_id FK
+        string name
+        string address
+        geography coordinates
+        string timezone
+        string status
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    SERVICE_OFFERINGS {
+        uuid id PK
+        uuid business_id FK
+        string name
+        string description
+        string category
+        string booking_mode
+        int duration_minutes
+        decimal price
+        string currency
+        boolean is_active
+    }
+    OFFERING_LOCATIONS {
+        uuid id PK
+        uuid offering_id FK
+        uuid location_id FK
+        boolean is_active
+    }
+    RESOURCES {
+        uuid id PK
+        uuid business_id FK
+        uuid location_id FK
+        string name
+        string resource_type
+        int capacity
+        boolean is_active
+    }
+    AVAILABILITY_RULES {
+        uuid id PK
+        uuid offering_id FK
+        uuid location_id FK
+        uuid resource_id FK
+        smallint day_of_week
+        time starts_at_local
+        time ends_at_local
+        boolean is_active
+    }
+    AVAILABILITY_EXCEPTIONS {
+        uuid id PK
+        uuid location_id FK
+        uuid resource_id FK
+        timestamptz starts_at
+        timestamptz ends_at
+        string exception_type
+    }
+    AVAILABILITY_SLOTS {
+        uuid id PK
+        uuid business_id FK
+        uuid location_id FK
+        uuid offering_id FK
+        uuid resource_id FK
+        timestamptz starts_at
+        timestamptz ends_at
+        int capacity_total
+        int capacity_reserved
+        string status
+        int version
+    }
+    BOOKINGS {
+        uuid id PK
+        uuid business_id FK
+        uuid location_id FK
+        uuid offering_id FK
+        uuid slot_id FK
+        uuid customer_id FK
+        int quantity
+        string status
+        string idempotency_key UK
+        string notes
+        timestamptz created_at
+        timestamptz cancelled_at
+    }
+    REVIEWS {
+        uuid id PK
+        uuid booking_id FK,UK
+        uuid business_id FK
+        uuid customer_id FK
+        smallint score
+        string comment
+        string moderation_status
+        timestamptz created_at
+    }
+
+    USERS ||--o{ BUSINESS_MEMBERSHIPS : has
+    BUSINESSES ||--o{ BUSINESS_MEMBERSHIPS : authorizes
+    BUSINESSES ||--o{ BUSINESS_LOCATIONS : owns
+    BUSINESSES ||--o{ SERVICE_OFFERINGS : offers
+    SERVICE_OFFERINGS ||--o{ OFFERING_LOCATIONS : published_at
+    BUSINESS_LOCATIONS ||--o{ OFFERING_LOCATIONS : supports
+    BUSINESS_LOCATIONS ||--o{ RESOURCES : contains
+    SERVICE_OFFERINGS ||--o{ AVAILABILITY_RULES : scheduled_by
+    BUSINESS_LOCATIONS ||--o{ AVAILABILITY_RULES : defines
+    RESOURCES o|--o{ AVAILABILITY_RULES : constrains
+    BUSINESS_LOCATIONS ||--o{ AVAILABILITY_EXCEPTIONS : has
+    RESOURCES o|--o{ AVAILABILITY_EXCEPTIONS : targets
+    SERVICE_OFFERINGS ||--o{ AVAILABILITY_SLOTS : produces
+    BUSINESS_LOCATIONS ||--o{ AVAILABILITY_SLOTS : hosts
+    RESOURCES o|--o{ AVAILABILITY_SLOTS : assigned
+    AVAILABILITY_SLOTS ||--o{ BOOKINGS : receives
+    USERS ||--o{ BOOKINGS : creates
+    BUSINESSES ||--o{ BOOKINGS : receives
+    BOOKINGS ||--o| REVIEWS : verifies
+    USERS ||--o{ REVIEWS : writes

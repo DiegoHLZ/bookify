@@ -1,196 +1,103 @@
-# MVP Scope
+# Bookify — MVP Scope
 
-## Purpose
+## Objective
 
-The MVP (Minimum Viable Product) of Bookify defines the first functional version of the platform. Its goal is to deliver the core booking flow for service businesses while keeping the architecture simple, scalable and suitable for future iterations.
+Validate a multi-category local discovery and booking flow without building separate domain logic for every industry.
 
-This version focuses on the essential features required for administrators to manage services and availability, and for clients to browse and create reservations.
+## MVP launch categories
 
----
+Begin with two or three categories that exercise the common engine, for example:
 
-## MVP Objective
+- barbershop/beauty appointment;
+- sports court or coworking-room rental;
+- capacity-based class.
 
-The main objective of the MVP is to validate the core value proposition of Bookify:
+Restaurants can be added when party-size and table-allocation policies are accepted. The platform model supports future categories, but each category must pass capability and usability tests before launch.
 
-- allow service businesses to manage their services and available schedules
-- allow clients to register, log in and book services
-- prevent double booking conflicts
-- provide administrators with basic booking management and simple metrics
+## In scope
 
----
+### Identity and tenancy
 
-## In Scope
+- Customer and business-staff registration/login.
+- Secure password hashing and role-based authorization.
+- Multiple staff members per business through memberships.
+- One business with one or more locations.
+- Strict tenant isolation.
 
-### 1. Authentication and Authorization
+### Catalog and discovery
 
-The MVP will include authentication and authorization features for two types of users: administrators and clients.
+- Business profile, category, location and geocoordinates.
+- Service offerings with duration, optional price and booking mode.
+- Search by text, category, distance and requested date/time.
+- Rating average and count from Bookify reviews.
+- Deterministic search fallback without AI.
 
-Included features:
+### Schedules, resources and availability
 
-- user registration
-- user login
-- JWT-based authentication
-- role-based access control
-- roles: `ADMIN` and `CLIENT`
+- Location opening hours.
+- Resource schedules and dated exceptions.
+- Resources such as staff, rooms, courts, chairs or equipment.
+- Exclusive-resource and capacity-based availability.
+- Authoritative revalidation during booking creation.
 
----
+### Bookings
 
-### 2. Business Management
+- Create, view and cancel a booking.
+- Business staff can list and update bookings for authorized businesses.
+- States: `PENDING`, `CONFIRMED`, `CANCELLED`, `REJECTED`, `COMPLETED`, `NO_SHOW`.
+- Idempotent creation and database-level conflict protection.
+- Historical retention.
 
-The MVP will support the basic registration and ownership of a business inside the platform.
+### Reviews
 
-Included features:
+- A customer can review a completed booking once.
+- Rating is 1–5 with optional bounded text.
+- Businesses cannot directly edit customer reviews.
 
-- basic business profile
-- business information display
-- association between admin user and business
+### AI discovery experiment
 
----
+- Semantic retrieval over approved business and offering content.
+- Hybrid ranking using semantic relevance plus structured eligibility.
+- Optional NVIDIA reranking over a bounded candidate set.
+- Feature flag, timeout and deterministic fallback.
+- Offline relevance test set and online search-quality metrics.
 
-### 3. Service Management
+## Out of scope for the first release
 
-Administrators will be able to manage the services offered by their business.
+- Universal support for every business category.
+- Payments, deposits, promotions and loyalty programs.
+- Paid ranking or advertising.
+- Imported third-party ratings presented as Bookify ratings.
+- Fully conversational agents that create bookings autonomously.
+- Personalized ranking based on sensitive profiling.
+- Dynamic pricing, overbooking and AI-generated availability.
+- Native mobile applications.
+- Microservices, event brokers and mandatory GPU infrastructure.
 
-Included features:
+## Core rules
 
-- create service
-- edit service
-- list services
-- deactivate service
+1. A location belongs to exactly one business.
+2. A service offering belongs to one business and is available at one or more of its locations.
+3. A resource and booking cannot cross business/location boundaries.
+4. Concrete bookings use UTC instants; each location stores an IANA timezone.
+5. Active exclusive-resource bookings cannot overlap.
+6. Capacity-based bookings cannot exceed the configured capacity.
+7. Search availability is advisory; creation revalidates in a transaction.
+8. Replayed requests with the same customer and idempotency key return the original booking.
+9. Only completed bookings can produce one verified review.
+10. AI ranking can reorder eligible candidates but cannot bypass location, availability, authorization or policy filters.
+11. If AI fails or exceeds its latency budget, structured search still works.
 
-Each service will contain at least:
+## Acceptance criteria
 
-- name
-- description
-- duration
-- price
-- active status
+- Cross-tenant access attempts are rejected and integration-tested.
+- Two concurrent requests cannot overbook the same exclusive resource or capacity.
+- A natural-language query returns only indexed businesses within active filters.
+- Every displayed distance is calculated from stored coordinates.
+- Ratings identify their source and Bookify aggregates use verified reviews.
+- AI-disabled and AI-timeout paths still allow discovery and booking.
+- Search and booking meet the targets in [Non-functional Requirements](./non-functional-requirements.md).
 
----
+## Definition of done
 
-### 4. Availability Management
-
-Administrators will be able to define available booking slots.
-
-Included features:
-
-- create availability slots
-- list availability slots
-- remove or deactivate availability slots
-- filter availability by service and date
-
-The MVP will use **explicit availability slots**, meaning that administrators define concrete time blocks available for reservation.
-
----
-
-### 5. Booking Management
-
-Clients will be able to reserve services based on available slots.
-
-Included features:
-
-- view available services
-- view available slots
-- create booking
-- cancel booking
-- view booking history
-
-Administrators will be able to:
-
-- view all bookings of their business
-- change booking status
-- monitor booking activity
-
----
-
-### 6. Booking Conflict Prevention
-
-The MVP must prevent double booking of the same availability slot.
-
-Included rules:
-
-- one slot can only be assigned to one active booking
-- the backend must validate slot availability before creating a booking
-- the database must enforce consistency to avoid duplicate reservations
-
----
-
-### 7. Admin Dashboard
-
-Administrators will have access to a basic dashboard with business metrics.
-
-Included metrics:
-
-- total bookings
-- bookings by status
-- recent bookings
-- most requested services
-
----
-
-## Out of Scope
-
-The following features are intentionally excluded from the MVP and may be considered in future versions:
-
-- online payments
-- email notifications
-- WhatsApp notifications
-- multi-branch support
-- staff or employee management
-- advanced calendar generation
-- recurring availability rules
-- rescheduling workflows
-- discount coupons
-- reviews and ratings
-- Google OAuth or social login
-- refresh token rotation
-- mobile app
-- advanced analytics
-- file uploads
-- public custom booking pages per business domain
-
----
-
-## Functional Boundaries
-
-To keep the MVP manageable, the following limits are defined:
-
-- the platform will support only two roles: `ADMIN` and `CLIENT`
-- availability will be managed through manual slots, not dynamic scheduling rules
-- the system will support one business context per administrator in the initial version
-- bookings will be made only through the web application
-- metrics will remain basic and operational, not analytical
-
----
-
-## Expected Deliverables of the MVP
-
-By the end of the MVP, Bookify should provide:
-
-- a working Angular frontend
-- a secure Spring Boot backend API
-- a PostgreSQL database model for bookings
-- JWT authentication and role-based authorization
-- service management for business administrators
-- slot-based booking flow for clients
-- basic booking dashboard for administrators
-- Dockerized deployment-ready structure
-
----
-
-## Success Criteria
-
-The MVP will be considered successful if:
-
-- administrators can manage services and availability
-- clients can register, log in and create bookings
-- bookings are stored correctly in the database
-- double booking is prevented
-- the admin dashboard shows basic operational information
-- the application can be deployed in a cloud environment
-
----
-
-## MVP Summary
-
-The Bookify MVP is focused on validating the essential booking workflow for service businesses through a modular SaaS architecture. It prioritizes usability, consistency, security and maintainability, while leaving advanced automation and business expansion features for future iterations.
+A feature includes domain rules, authorization, validation, migration, automated tests, API contract, observability and documentation. AI features additionally require a quality benchmark, cost/latency measurement, fallback and safety evaluation.

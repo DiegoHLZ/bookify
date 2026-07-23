@@ -1,232 +1,152 @@
-# Database Design
+# Bookify — Database Design
 
-## Overview
+## Purpose
 
-The Bookify platform relies on a relational database to manage businesses, services, availability schedules and bookings.
+PostgreSQL stores transactional booking data. PostGIS is recommended for geospatial filtering. Semantic vectors are a derived search projection, never the source of truth for businesses, ratings or availability.
 
-PostgreSQL is used as the database management system because it provides strong consistency, transactional integrity and powerful relational capabilities.
+## Entity relationship diagram
 
-The database is designed to support a **multi-tenant SaaS architecture**, where multiple businesses operate on the same platform while keeping their data logically isolated.
+![Bookify ER diagram](./diagrams/entity-relationship-diagram.png)
 
-Tenant isolation is achieved through the use of a `business_id` reference in business-related entities.
+Editable source: [entity-relationship-diagram.mmd](./diagrams/entity-relationship-diagram.mmd).
 
----
+## Conventions
 
-## Entity Relationship Diagram
+- UUID primary keys and `snake_case` names.
+- `created_at`/`updated_at` are timezone-aware instants.
+- Emails are normalized and compared case-insensitively.
+- Concrete slots/bookings use UTC instants; locations store IANA timezones.
+- Important history is logically deactivated, not physically deleted.
+- Foreign keys include the tenant/location context where necessary to prevent cross-tenant references.
 
-![Bookify ER Diagram](./diagrams/er-diagram.drawio.png)
+## Core entities
 
----
+### `users`
 
-## Core Entities
+Identity for customers, business staff and platform administrators. Contains normalized unique email, password hash, account/platform roles and audit timestamps.
 
-The main entities of the system are:
+### `businesses`
 
-- User
-- Business
-- Service
-- AvailabilitySlot
-- Booking
+Tenant root and brand-level profile. A business can have multiple locations, staff memberships and offerings.
 
-These entities represent the core domain model of the reservation platform.
+### `business_memberships`
 
----
+Many-to-many relationship between users and businesses with a role and active state. Unique (`business_id`, `user_id`).
 
-## Entity Descriptions
+### `business_locations`
 
-### User
+Physical place where a booking happens. Contains address, IANA timezone and `geography(Point, 4326)` coordinates. Distance filtering uses a GiST index.
 
-Represents a platform user.
+### `service_offerings`
 
-Users can be either administrators of a business or clients who make reservations.
+What a customer books:
 
-Main attributes include:
+- name and description;
+- category;
+- `booking_mode`: `APPOINTMENT`, `EXCLUSIVE_RESOURCE` or `CAPACITY_SESSION`;
+- duration;
+- optional fixed-precision price and currency;
+- active state.
 
-- id
-- name
-- email
-- password
-- role
-- created_at
-- updated_at
+### `offering_locations`
 
-Roles supported by the system:
+Makes an offering bookable at one or more locations and can override capacity or price later without duplicating the offering.
 
-- ADMIN
-- CLIENT
+### `resources`
 
-Administrators are associated with a business, while clients may interact with multiple businesses through bookings.
+Bookable assets at a location, such as a staff member, court, room, chair, table or equipment. Includes type, capacity and active state.
 
----
+### `availability_rules`
 
-### Business
+Recurring local-time rules for an offering/location and optionally a resource. Multiple daily intervals are allowed. Rules generate concrete slots within a bounded future horizon.
 
-Represents a business registered in the platform.
+### `availability_exceptions`
 
-Each business manages its own services, availability slots and bookings.
+Dated closures or overrides for a location/resource. Concrete instants are stored in UTC.
 
-Main attributes include:
+### `availability_slots`
 
-- id
-- name
-- description
-- category
-- address
-- phone
-- email
-- created_at
-- updated_at
+Concrete reservable intervals generated or manually created for an offering/location. Important fields:
 
-A business acts as the tenant boundary for the system.
+- optional `resource_id`;
+- `starts_at`, `ends_at`;
+- `capacity_total`, `capacity_reserved`;
+- status and optimistic `version`.
 
----
+Exclusive resources use total capacity `1`. Capacity sessions atomically reserve one or more places. Slot generation is idempotent through a unique natural key.
 
-### Service
+### `bookings`
 
-Represents a service offered by a business.
+Links customer, business, location, offering and slot. Contains quantity/party size, state, notes, idempotency key and audit/cancellation timestamps.
 
-Examples include:
+Unique (`customer_id`, `idempotency_key`). Business/location/offering/slot consistency is enforced using composite constraints or reviewed database triggers.
 
-- haircut
-- medical consultation
-- sports field rental
-- coworking room reservation
+### `reviews`
 
-Main attributes include:
+One verified rating per completed booking. Contains score 1–5, optional text, moderation state and audit timestamps. Unique `booking_id`.
 
-- id
-- business_id
-- name
-- description
-- duration_minutes
-- price
-- is_active
-- created_at
-- updated_at
+## Relationships
 
-Services can be deactivated instead of deleted in order to preserve booking history.
+- Business 1 → N locations, memberships and offerings.
+- User 1 → N memberships, bookings and reviews.
+- Offering N ↔ N locations through `offering_locations`.
+- Location 1 → N resources, rules, exceptions, slots and bookings.
+- Offering 1 → N rules, slots and bookings.
+- Resource 1 → N optional rules, exceptions and slots.
+- Slot 1 → N bookings only when its capacity permits.
+- Booking 1 → 0..1 review.
 
----
+## Availability and concurrency
 
-### AvailabilitySlot
+1. Convert requested local time using the location timezone.
+2. Find active offerings/locations and eligible slots.
+3. Apply structured filters before semantic ranking.
+4. During booking creation, lock the selected slot row.
+5. Verify `capacity_reserved + requested_quantity <= capacity_total`.
+6. Atomically increment capacity and insert the booking.
+7. On cancellation, atomically release capacity exactly once.
 
-Represents a time slot that is available for booking.
+For exclusive-resource intervals that are not pre-generated, PostgreSQL exclusion constraints can protect overlapping `tstzrange` values. The first implementation should choose either slot locking or range exclusion per booking mode and capture it in a migration ADR.
 
-Administrators define availability slots for each service.
+## Geospatial search
 
-Main attributes include:
+- Coordinates use validated longitude/latitude and stored geocoding provenance.
+- `ST_DWithin` applies a hard radius filter.
+- `ST_Distance` calculates display/ranking distance.
+- The platform must not infer or fabricate a location through an LLM.
 
-- id
-- business_id
-- service_id
-- start_time
-- end_time
-- is_available
-- created_at
-- updated_at
+## Ratings
 
-Slots are used to simplify booking logic and prevent scheduling conflicts.
+Maintain `rating_average` and `rating_count` as a rebuildable projection for search performance. The `reviews` table remains authoritative. Bayesian smoothing or minimum-count rules should prevent a single five-star review from dominating mature listings.
 
----
+## AI search projection
 
-### Booking
+An asynchronous projection may store:
 
-Represents a reservation created by a client.
+- business/location/offering IDs;
+- normalized searchable text;
+- structured category and status metadata;
+- embedding vector plus model/version;
+- projection timestamp.
 
-A booking links a client, a service and a specific availability slot.
+The projection contains no authoritative availability. Search rechecks current structured data before presenting or booking results. Changing the embedding model requires reindexing and versioned evaluation.
 
-Main attributes include:
+## Initial indexes
 
-- id
-- business_id
-- service_id
-- client_id
-- slot_id
-- status
-- notes
-- created_at
-- updated_at
+- Unique normalized user email.
+- Memberships by (`user_id`, `is_active`).
+- Locations GiST index on coordinates.
+- Offerings by (`business_id`, `category`, `is_active`).
+- Resources by (`location_id`, `type`, `is_active`).
+- Slots by (`location_id`, `offering_id`, `starts_at`, `status`).
+- Bookings by (`business_id`, `starts_at`, `status`) and (`customer_id`, `created_at desc`).
+- Reviews by (`business_id`, `moderation_status`) as needed by aggregate jobs.
 
-Possible booking statuses include:
+Validate indexes with production-like data and `EXPLAIN (ANALYZE, BUFFERS)`.
 
-- PENDING
-- CONFIRMED
-- CANCELLED
-- COMPLETED
+## Migration policy
 
----
-
-## Entity Relationships
-
-The system contains the following relationships:
-
-Business 1 → N Service  
-Business 1 → N AvailabilitySlot  
-Business 1 → N Bookings  
-
-User 1 → N Booking  
-
-Service 1 → N AvailabilitySlot  
-Service 1 → N Booking  
-
-AvailabilitySlot 1 → 0..1 Booking
-
-This means that one availability slot can only be reserved once.
-
----
-
-## Multi-Tenant Data Isolation
-
-To support multiple businesses in the same system, several entities contain a `business_id` field.
-
-Entities that include this field:
-
-- Service
-- AvailabilitySlot
-- Booking
-
-This ensures that data is logically separated between businesses even though they share the same database.
-
----
-
-## Booking Conflict Prevention
-
-Preventing double booking is critical in reservation systems.
-
-Bookify prevents scheduling conflicts using two mechanisms.
-
-### Application-Level Validation
-
-Before creating a booking, the backend verifies:
-
-- the slot exists
-- the slot belongs to the correct business
-- the slot is still available
-- the service is active
-
-### Database-Level Protection
-
-The database ensures that a slot cannot have more than one active booking.
-
-This guarantees data consistency even if multiple requests occur simultaneously.
-
----
-
-## Indexing Strategy
-
-Indexes will be applied to frequently queried fields, including:
-
-- business_id
-- service_id
-- slot_id
-- client_id
-
-Indexes improve performance when retrieving bookings, services and availability slots.
-
----
-
-## Database Summary
-
-The Bookify database design focuses on maintaining strong relationships between entities while ensuring booking consistency and tenant isolation.
-
-The relational structure supports the core reservation workflow and provides a reliable foundation for future system expansion.
+- Use reviewed, versioned migrations.
+- Production uses Hibernate schema validation, never `ddl-auto: update`.
+- Migrations are forward-only and tested against PostgreSQL/PostGIS.
+- Destructive changes require expand/migrate/contract planning and a verified backup.

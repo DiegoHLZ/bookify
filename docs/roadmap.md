@@ -1,260 +1,82 @@
-# Development Roadmap
+# Bookify — Delivery Roadmap
 
-## Overview
+## Phase 0 — Product and architecture baseline
 
-This roadmap defines the development phases of the Bookify platform.  
-The goal is to incrementally build the system starting from architecture definition, followed by backend and frontend implementation, and finally deployment.
+- Approve target launch categories and the three booking modes.
+- Approve tenant/location/catalog/availability/booking/review ER model.
+- Define NFRs, ADRs, privacy boundaries and AI evaluation plan.
+- Reconcile the repository prototype with the target model.
 
-Each phase focuses on a specific part of the system to ensure controlled development and maintainable progress.
+Exit: no unresolved product-domain ambiguity; capacity, location, time and tenant invariants are testable.
 
----
+## Phase 1 — Secure foundation
 
-## Phase 0 — Architecture and Planning
+- Externalize/rotate secrets.
+- Add PostgreSQL/PostGIS migrations and schema validation.
+- Establish modular boundaries, stable errors, CI and integration tests.
+- Add logs, correlation IDs and health checks.
 
-Objective: define the architecture and technical foundations of the system before development begins.
+Exit: clean checkout builds/tests; schema is reproducible; no committed credentials.
 
-Completed tasks include:
+## Phase 2 — Identity, businesses and locations
 
-- project vision definition
-- MVP scope definition
-- system architecture design
-- software architecture definition
-- database conceptual design
-- development roadmap creation
+- Customer identities and business memberships.
+- Business/location profiles and verified coordinates.
+- Deny-by-default tenant authorization.
 
-Deliverables:
+Exit: cross-tenant tests pass and nearby queries use correct geospatial calculations.
 
-- project-overview.md
-- mvp-scope.md
-- system-architecture.md
-- software-architecture.md
-- database-design.md
-- roadmap.md
+## Phase 3 — Catalog and booking modes
 
----
+- Offerings, resources, schedules, exceptions and concrete slots.
+- Implement one appointment category and one resource/capacity category.
+- Validate each booking-mode policy independently.
 
-## Phase 1 — Project Setup
+Exit: businesses configure offerings and the system calculates correct availability.
 
-Objective: initialize the development environment and core project structure.
+## Phase 4 — Transactional booking slice
 
-Backend tasks:
+- Discovery filters and availability.
+- Idempotent booking creation/cancellation.
+- Capacity locking and concurrency tests.
+- Customer/business booking views.
 
-- initialize Spring Boot project
-- configure project structure
-- configure Spring Security
-- configure JWT authentication
-- configure PostgreSQL connection
-- configure JPA/Hibernate
-- configure global exception handling
-- enable Swagger/OpenAPI documentation
+Exit: discovery → booking works end to end and cannot overbook under concurrent load.
 
-Frontend tasks:
+## Phase 5 — Reviews and baseline ranking
 
-- initialize Angular project
-- configure routing
-- configure project architecture (core, shared, features)
-- implement base layouts
-- configure HTTP client
-- configure authentication interceptor
+- One verified review per completed booking.
+- Rating aggregates and abuse/moderation controls.
+- Deterministic ranking using eligibility, distance, rating confidence and availability.
 
-Deliverables:
+Exit: ranking is explainable and works without AI.
 
-- backend project initialized
-- frontend project initialized
-- basic project structure ready for development
+## Phase 6 — NVIDIA-assisted discovery experiment
 
----
+- Create a labeled multilingual query set.
+- Build a derived search projection.
+- Integrate NVIDIA embeddings behind `EmbeddingPort`.
+- Benchmark hybrid retrieval against the deterministic baseline.
+- Add bounded NVIDIA reranking only if relevance gains justify latency/cost.
+- Add feature flags, timeouts, fallback and model observability.
 
-## Phase 2 — Authentication and User Management
+Exit: zero ineligible/hallucinated results, measurable relevance improvement, accepted latency/unit economics and safe fallback.
 
-Objective: implement user authentication and role management.
+## Phase 7 — Production readiness and MVP release
 
-Backend tasks:
+- Security/accessibility/performance testing.
+- Backup/restore and deployment runbooks.
+- SLO dashboards and alerts.
+- Controlled rollout to selected business categories.
 
-- implement user entity
-- implement authentication endpoints
-- implement login logic
-- generate JWT tokens
-- configure role-based security
+Exit: restore tested, critical findings resolved and production-like SLOs met.
 
-Frontend tasks:
+## Post-MVP
 
-- implement login page
-- implement registration page
-- implement authentication service
-- implement route guards
-- store JWT tokens securely
+- More business categories and booking policies.
+- Payments, deposits and notifications.
+- Personalized recommendations with consent and privacy review.
+- Multi-branch operations and staff scheduling.
+- Conversational booking assistant with explicit confirmation.
 
-Deliverables:
-
-- users can register
-- users can log in
-- JWT authentication working
-- protected routes implemented
-
----
-
-## Phase 3 — Business and Service Management
-
-Objective: allow administrators to manage business services.
-
-Backend tasks:
-
-- implement business entity
-- implement service entity
-- implement service CRUD operations
-- implement service activation/deactivation
-
-Frontend tasks:
-
-- service management interface
-- service creation form
-- service editing form
-- service list view
-
-Deliverables:
-
-- administrators can manage services
-- services stored in database
-- services displayed in the frontend
-
----
-
-## Phase 4 — Availability Management
-
-Objective: allow administrators to define available booking slots.
-
-Backend tasks:
-
-- implement availability slot entity
-- implement slot creation
-- implement slot listing
-- implement slot filtering by date and service
-
-Frontend tasks:
-
-- availability management interface
-- slot creation form
-- slot listing view
-
-Deliverables:
-
-- administrators can create availability slots
-- slots stored in database
-- slots available for booking queries
-
----
-
-## Phase 5 — Booking System
-
-Objective: implement the core reservation workflow.
-
-Backend tasks:
-
-- implement booking entity
-- implement booking creation endpoint
-- implement booking cancellation
-- implement booking status updates
-- implement booking validation logic
-- prevent double booking
-
-Frontend tasks:
-
-- service selection interface
-- availability slot selection
-- booking confirmation flow
-- booking history view
-
-Deliverables:
-
-- clients can create bookings
-- bookings stored in database
-- booking conflicts prevented
-
----
-
-## Phase 6 — Admin Dashboard
-
-Objective: provide administrators with operational insights.
-
-Backend tasks:
-
-- implement dashboard queries
-- calculate booking statistics
-- retrieve recent bookings
-
-Frontend tasks:
-
-- dashboard page
-- booking metrics visualization
-- recent activity list
-
-Deliverables:
-
-- dashboard with booking statistics
-- administrators can monitor business activity
-
----
-
-## Phase 7 — Deployment
-
-Objective: prepare the system for production deployment.
-
-Tasks include:
-
-- containerize backend with Docker
-- containerize frontend
-- configure docker-compose
-- configure environment variables
-- deploy backend to cloud environment
-- deploy frontend hosting
-- configure production database
-
-Deliverables:
-
-- application deployed in the cloud
-- production-ready configuration
-- public access to the platform
-
----
-
-## Phase 8 — AI Innovation
-
-Objective: enhance the platform with AI-powered service discovery using semantic search techniques.
-
-Tasks may include:
-
-- integrating embedding models
-- generating vector embeddings for services
-- implementing semantic search queries
-- implementing result reranking
-- improving service discovery through natural language queries
-
-Deliverables:
-
-- AI-powered semantic search prototype
-- vector-based service discovery
-- improved service relevance using reranking
-
----
-
-## Future Improvements
-
-Possible future improvements after the MVP include:
-
-- payment integration
-- notification system (email or messaging)
-- advanced calendar management
-- recurring availability schedules
-- multi-branch support
-- staff scheduling
-- analytics and reporting
-- mobile application
-
----
-
-## Roadmap Summary
-
-The Bookify roadmap follows a structured development strategy that prioritizes architectural clarity, incremental delivery and scalability.
-
-The system is built step-by-step starting from architecture definition, followed by core backend services, frontend interfaces and finally production deployment.
+Microservices, dedicated GPU infrastructure and autonomous booking agents require separate ADRs and measured justification.
