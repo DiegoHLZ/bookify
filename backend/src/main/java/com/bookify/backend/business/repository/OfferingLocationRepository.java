@@ -21,4 +21,10 @@ public interface OfferingLocationRepository extends JpaRepository<OfferingLocati
     @Modifying
     @Query("delete from OfferingLocation link where link.service.id = :serviceId")
     void deleteByServiceId(@Param("serviceId") Long serviceId);
+
+    boolean existsByBusinessIdAndServiceIdAndLocationId(
+            Long businessId,
+            Long serviceId,
+            Long locationId
+    );
 }

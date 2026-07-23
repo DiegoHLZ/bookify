@@ -38,7 +38,7 @@ Status: **in progress**. Customer registration is tenant-independent, JWTs no lo
 
 Exit: businesses configure offerings and the system calculates correct availability.
 
-Status: **in progress**. Offerings now use fixed-precision prices and are assigned atomically to one or more active locations with database-enforced tenant boundaries. Resources, schedules, exceptions and availability remain.
+Status: **in progress**. Offerings use fixed-precision prices and are assigned atomically to active locations. Generic resources support professionals, courts, rooms, desks and equipment; service-resource links enforce tenant and location consistency. Schedules, exceptions and availability remain.
 
 ## Phase 4 — Transactional booking slice
 

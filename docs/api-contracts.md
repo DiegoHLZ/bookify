@@ -73,3 +73,23 @@ Base path: `/api/v1/businesses/{businessId}/services`
 Create and update payloads include a non-empty `locationIds` set. Every referenced location must be active and belong to the path's business. Prices use fixed-precision decimal values with at most two fractional digits; currencies currently accept `PEN`, `USD` or `EUR`.
 
 The database stores `business_id` in `offering_locations` and uses composite foreign keys, preventing cross-tenant service/location associations even if an application-layer check is bypassed.
+
+## Bookable resources
+
+Base path: `/api/v1/businesses/{businessId}/locations/{locationId}/resources`
+
+- `POST /` creates a resource. Requires `OWNER` or `ADMIN`.
+- `GET /` and `GET /{resourceId}` require any active membership.
+- `PUT /{resourceId}` updates its details. Requires `OWNER` or `ADMIN`.
+- `PATCH /{resourceId}/status` activates or deactivates it. Requires `OWNER` or `ADMIN`.
+
+Supported types are `PROFESSIONAL`, `COURT`, `ROOM`, `DESK` and `EQUIPMENT`. Capacity must be between 1 and 10,000. Names are unique per location ignoring case at the application boundary. Resources use soft deletion, and a resource cannot be created or reactivated inside an inactive location.
+
+Service-resource assignment uses:
+
+- `GET /api/v1/businesses/{businessId}/services/{serviceId}/resources`
+- `PUT /api/v1/businesses/{businessId}/services/{serviceId}/resources`
+
+The `PUT` body is `{"resourceIds":[...]}` and replaces the complete assignment atomically; an empty set removes all assignments. Each resource must be active, belong to the business and be located at a site where the service is offered.
+
+Composite database constraints ensure that service, location and resource tenant identifiers remain consistent even if application validation is bypassed.
