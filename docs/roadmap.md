@@ -18,6 +18,8 @@ Exit: no unresolved product-domain ambiguity; capacity, location, time and tenan
 
 Exit: clean checkout builds/tests; schema is reproducible; no committed credentials.
 
+Status: **in progress**. Environment-backed secrets, Maven Wrapper repair, Flyway baseline, schema validation, health probes, backend CI and local PostGIS Compose infrastructure are complete. Full observability and PostgreSQL integration tests remain.
+
 ## Phase 2 — Identity, businesses and locations
 
 - Customer identities and business memberships.

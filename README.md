@@ -14,3 +14,7 @@ It targets multiple categories—such as beauty, health, sports, coworking and h
 ## Current priority
 
 Approve the multi-category MVP, booking modes and ER model; then reconcile the existing generic prototype through safe migrations. See the [documentation index](./docs/README.md).
+
+## Local infrastructure
+
+Copy `.env.example` to `.env`, replace its placeholders and run `docker compose up -d database`. Backend instructions are in [backend/README.md](./backend/README.md).

@@ -1,6 +1,7 @@
 package com.bookify.backend.auth.controller;
 
 import com.bookify.backend.auth.service.JwtService;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
@@ -9,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
+@Profile("dev")
 public class JwtDebugController {
 
     private final JwtService jwtService;
