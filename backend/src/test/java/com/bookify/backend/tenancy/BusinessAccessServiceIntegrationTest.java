@@ -81,6 +81,7 @@ class BusinessAccessServiceIntegrationTest {
         Business business = new Business();
         business.setName(slug);
         business.setSlug(slug);
+        business.setCategoryCode("PROFESSIONAL_SERVICES");
         business.setActive(true);
         return business;
     }

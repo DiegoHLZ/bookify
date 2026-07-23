@@ -4,7 +4,7 @@ Assessment date: 2026-07-23.
 
 ## Summary
 
-The Angular/Spring Boot repository is an early generic service-booking technical spike. Its `Business` and `ServiceOffering` concepts align partially with the product, but locations, resources, robust availability, bookings, reviews, geospatial discovery and AI search are not yet implemented.
+The Angular/Spring Boot repository is an early generic service-booking implementation. Business onboarding, initial locations and owner memberships now form a working transactional slice, while resources, robust availability, bookings, reviews, geospatial discovery and AI search are not yet implemented.
 
 ## Reusable foundations
 
@@ -25,19 +25,22 @@ The Angular/Spring Boot repository is an early generic service-booking technical
 - GitHub Actions verifies the backend with Java 17.
 - Business access is modeled through active memberships rather than a business ID embedded in JWT claims.
 - Flyway migrations preserve legacy user/business associations and then remove the obsolete direct foreign key.
+- Authenticated onboarding creates a categorized business, its first WGS84 location and the owner's membership atomically.
+- Business categories are data-backed so the core model is not tied to restaurants or another single vertical.
+- Users can list their active business memberships through `/api/v1/me/businesses`.
 
 The previously committed JWT value must still be considered compromised and rotated anywhere it was used.
 
 ## Critical items before feature expansion
 
-1. Add business onboarding and owner-membership creation as one transaction.
-2. Replace ambiguous `LocalDateTime` entity fields with the documented location-timezone policy.
-3. Decide UUID migration before durable production data exists.
-4. Replace `Double` prices with fixed-precision decimal values.
+1. Replace ambiguous `LocalDateTime` entity fields with the documented location-timezone policy.
+2. Decide UUID migration before durable production data exists.
+3. Replace `Double` prices with fixed-precision decimal values.
+4. Add PostGIS geography indexing and verified nearby queries.
 
 ## Missing capabilities
 
-- Business locations and PostGIS.
+- PostGIS nearby search and coordinate verification.
 - Resources, schedules, exceptions, slots and bookings.
 - Capacity/idempotency/concurrency guarantees.
 - Verified reviews and rating projections.
@@ -47,4 +50,4 @@ The previously committed JWT value must still be considered compromised and rota
 
 ## Recommended handling
 
-Preserve the prototype history and migrate incrementally after the ER model is approved. Membership-based tenant authorization is now established. The next slice is business/location onboarding followed by one end-to-end booking mode. Semantic search comes after a trustworthy catalog and availability flow exist.
+Preserve the prototype history and migrate incrementally after the ER model is approved. Membership-based tenant authorization and transactional business/location onboarding are now established. The next slice is location management and one end-to-end booking mode. Semantic search comes after a trustworthy catalog and availability flow exist.

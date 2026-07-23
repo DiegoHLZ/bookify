@@ -17,6 +17,9 @@ public class Business {
     @Column(unique = true, nullable = false)
     private String slug;
 
+    @Column(name = "category_code", nullable = false, length = 50)
+    private String categoryCode;
+
     private String description;
 
     private String phone;
@@ -70,6 +73,14 @@ public class Business {
 
     public String getDescription() {
         return description;
+    }
+
+    public String getCategoryCode() {
+        return categoryCode;
+    }
+
+    public void setCategoryCode(String categoryCode) {
+        this.categoryCode = categoryCode;
     }
 
     public void setDescription(String description) {

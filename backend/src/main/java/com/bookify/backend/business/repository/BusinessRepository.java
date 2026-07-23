@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface BusinessRepository extends JpaRepository<Business, Long> {
     Optional<Business> findBySlug(String slug);
+
+    boolean existsBySlugIgnoreCase(String slug);
 }
