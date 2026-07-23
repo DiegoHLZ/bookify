@@ -48,3 +48,15 @@ Categories are data-backed and can evolve without adding restaurant-specific log
 `GET /api/v1/me/businesses`
 
 Returns the active businesses for which the authenticated user has an active membership, including that membership's role and the business category.
+
+## Business locations
+
+Base path: `/api/v1/businesses/{businessId}/locations`
+
+- `POST /` creates an additional location. Requires an active `OWNER` or `ADMIN` membership.
+- `GET /` lists the business locations. Requires any active membership.
+- `GET /{locationId}` returns one location and verifies that it belongs to the path's business.
+- `PUT /{locationId}` replaces the editable location details. Requires `OWNER` or `ADMIN`.
+- `PATCH /{locationId}/status` accepts `{"active": true|false}`. Requires `OWNER` or `ADMIN`.
+
+Location names are unique per business ignoring case at the application boundary. A business must retain at least one active location; status changes lock the business row so concurrent requests cannot violate that invariant.

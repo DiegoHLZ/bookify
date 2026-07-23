@@ -139,4 +139,34 @@ public class BusinessLocation {
     public boolean isActive() {
         return active;
     }
+
+    public void updateDetails(
+            String name,
+            String address,
+            String city,
+            String countryCode,
+            String timezone,
+            BigDecimal latitude,
+            BigDecimal longitude
+    ) {
+        this.name = name;
+        this.address = address;
+        this.city = city;
+        this.countryCode = countryCode;
+        this.timezone = timezone;
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
 }

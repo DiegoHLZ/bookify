@@ -28,6 +28,8 @@ The Angular/Spring Boot repository is an early generic service-booking implement
 - Authenticated onboarding creates a categorized business, its first WGS84 location and the owner's membership atomically.
 - Business categories are data-backed so the core model is not tied to restaurants or another single vertical.
 - Users can list their active business memberships through `/api/v1/me/businesses`.
+- Location management supports create, list, detail, update and activation changes with tenant/role checks.
+- The final active location cannot be disabled; the invariant is protected with a transactional business-row lock.
 
 The previously committed JWT value must still be considered compromised and rotated anywhere it was used.
 
@@ -36,7 +38,7 @@ The previously committed JWT value must still be considered compromised and rota
 1. Replace ambiguous `LocalDateTime` entity fields with the documented location-timezone policy.
 2. Decide UUID migration before durable production data exists.
 3. Replace `Double` prices with fixed-precision decimal values.
-4. Add PostGIS geography indexing and verified nearby queries.
+4. Add PostGIS geography indexing, coordinate verification and verified nearby queries.
 
 ## Missing capabilities
 
@@ -50,4 +52,4 @@ The previously committed JWT value must still be considered compromised and rota
 
 ## Recommended handling
 
-Preserve the prototype history and migrate incrementally after the ER model is approved. Membership-based tenant authorization and transactional business/location onboarding are now established. The next slice is location management and one end-to-end booking mode. Semantic search comes after a trustworthy catalog and availability flow exist.
+Preserve the prototype history and migrate incrementally after the ER model is approved. Membership-based tenant authorization, transactional onboarding and location management are now established. The next slice links offerings to locations and introduces resources/schedules for one end-to-end booking mode. Semantic search comes after a trustworthy catalog and availability flow exist.
