@@ -23,16 +23,17 @@ The Angular/Spring Boot repository is an early generic service-booking technical
 - Token/test controllers load only under the `dev` profile.
 - Health probes and UTC JDBC handling are configured.
 - GitHub Actions verifies the backend with Java 17.
+- Business access is modeled through active memberships rather than a business ID embedded in JWT claims.
+- Flyway migrations preserve legacy user/business associations and then remove the obsolete direct foreign key.
 
 The previously committed JWT value must still be considered compromised and rotated anywhere it was used.
 
 ## Critical items before feature expansion
 
-1. Replace the single `User → Business` relationship with memberships.
-2. Authorize business IDs against the authenticated user's active memberships.
-3. Replace ambiguous `LocalDateTime` entity fields with the documented location-timezone policy.
-4. Decide UUID migration before durable production data exists.
-5. Replace `Double` prices with fixed-precision decimal values.
+1. Add business onboarding and owner-membership creation as one transaction.
+2. Replace ambiguous `LocalDateTime` entity fields with the documented location-timezone policy.
+3. Decide UUID migration before durable production data exists.
+4. Replace `Double` prices with fixed-precision decimal values.
 
 ## Missing capabilities
 
@@ -46,4 +47,4 @@ The previously committed JWT value must still be considered compromised and rota
 
 ## Recommended handling
 
-Preserve the prototype history and migrate incrementally after the ER model is approved. The next foundation slice is memberships plus tenant authorization, followed by one end-to-end booking mode. Semantic search comes after a trustworthy catalog and availability flow exist.
+Preserve the prototype history and migrate incrementally after the ER model is approved. Membership-based tenant authorization is now established. The next slice is business/location onboarding followed by one end-to-end booking mode. Semantic search comes after a trustworthy catalog and availability flow exist.

@@ -28,6 +28,8 @@ Status: **in progress**. Environment-backed secrets, Maven Wrapper repair, Flywa
 
 Exit: cross-tenant tests pass and nearby queries use correct geospatial calculations.
 
+Status: **in progress**. Customer registration is tenant-independent, JWTs no longer embed a business ID, and service-management access is protected by active business memberships with integration tests. Business/location onboarding and PostGIS queries remain.
+
 ## Phase 3 — Catalog and booking modes
 
 - Offerings, resources, schedules, exceptions and concrete slots.

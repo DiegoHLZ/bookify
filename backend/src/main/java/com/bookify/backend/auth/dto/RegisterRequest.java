@@ -2,7 +2,6 @@ package com.bookify.backend.auth.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 public class RegisterRequest {
 
@@ -18,9 +17,6 @@ public class RegisterRequest {
 
     @NotBlank
     private String password;
-
-    @NotNull
-    private Long businessId;
 
     public RegisterRequest() {
     }
@@ -57,11 +53,4 @@ public class RegisterRequest {
         this.password = password;
     }
 
-    public Long getBusinessId() {
-        return businessId;
-    }
-
-    public void setBusinessId(Long businessId) {
-        this.businessId = businessId;
-    }
 }

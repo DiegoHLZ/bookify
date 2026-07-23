@@ -47,10 +47,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (jwtService.isTokenValid(jwt, userDetails.getUsername())) {
                 String role = jwtService.extractRole(jwt);
-                Long businessId = jwtService.extractBusinessId(jwt);
-
                 AuthenticatedUser authenticatedUser =
-                        new AuthenticatedUser(userDetails.getUsername(), role, businessId);
+                        new AuthenticatedUser(userDetails.getUsername(), role);
 
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(

@@ -4,12 +4,10 @@ public class AuthenticatedUser {
 
     private final String email;
     private final String role;
-    private final Long businessId;
 
-    public AuthenticatedUser(String email, String role, Long businessId) {
+    public AuthenticatedUser(String email, String role) {
         this.email = email;
         this.role = role;
-        this.businessId = businessId;
     }
 
     public String getEmail() {
@@ -20,7 +18,4 @@ public class AuthenticatedUser {
         return role;
     }
 
-    public Long getBusinessId() {
-        return businessId;
-    }
 }

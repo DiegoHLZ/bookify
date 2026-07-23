@@ -17,17 +17,6 @@ public class SecurityUtils {
         return authentication.getName();
     }
 
-    public static Long getCurrentBusinessId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Object principal = authentication.getPrincipal();
-
-        if (principal instanceof AuthenticatedUser authenticatedUser) {
-            return authenticatedUser.getBusinessId();
-        }
-
-        return null;
-    }
-
     public static String getCurrentRole() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Object principal = authentication.getPrincipal();

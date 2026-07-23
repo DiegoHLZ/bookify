@@ -17,12 +17,21 @@ From the repository root:
 4. Run the API with `./mvnw spring-boot:run`.
 
 Spring Boot intentionally has no committed database password or JWT fallback. Startup fails when required variables are absent.
+The Compose environment exposes Bookify PostgreSQL on host port `5433` by default to avoid conflicting with a native PostgreSQL installation on `5432`.
 
 ## Database changes
 
 Flyway owns the schema under `src/main/resources/db/migration`. Hibernate uses `ddl-auto: validate`; entities cannot silently mutate a shared database.
 
 The first migration captures the existing prototype schema. New multi-category entities will be introduced through later reviewed migrations after the ER model is approved.
+
+Business authorization is membership-based. Tenant-scoped service endpoints use:
+
+```text
+/api/businesses/{businessId}/services
+```
+
+The backend validates the authenticated user's active membership instead of trusting a business ID from a JWT.
 
 ## Tests
 

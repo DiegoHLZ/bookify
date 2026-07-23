@@ -1,6 +1,5 @@
 package com.bookify.backend.user.model;
 
-import com.bookify.backend.business.model.Business;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -31,10 +30,6 @@ public class User {
 
     @Column(nullable = false)
     private boolean active = true;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "business_id")
-    private Business business;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -106,14 +101,6 @@ public class User {
 
     public void setActive(boolean active) {
         this.active = active;
-    }
-
-    public Business getBusiness() {
-        return business;
-    }
-
-    public void setBusiness(Business business) {
-        this.business = business;
     }
 
     public LocalDateTime getCreatedAt() {

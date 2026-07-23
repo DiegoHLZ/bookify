@@ -26,8 +26,6 @@ public class JwtDebugController {
         Map<String, Object> response = new HashMap<>();
         response.put("email", jwtService.extractUsername(token));
         response.put("role", jwtService.extractRole(token));
-        response.put("businessId", jwtService.extractBusinessId(token));
-
         return response;
     }
 }

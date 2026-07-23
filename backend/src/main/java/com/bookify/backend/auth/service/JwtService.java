@@ -21,10 +21,9 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
-    public String generateToken(String email, String role, Long businessId) {
+    public String generateToken(String email, String role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
-        claims.put("businessId", businessId);
 
         return Jwts.builder()
                 .claims(claims)
@@ -41,17 +40,6 @@ public class JwtService {
 
     public String extractRole(String token) {
         return extractAllClaims(token).get("role", String.class);
-    }
-
-    public Long extractBusinessId(String token) {
-        Object businessId = extractAllClaims(token).get("businessId");
-        if (businessId instanceof Integer) {
-            return ((Integer) businessId).longValue();
-        }
-        if (businessId instanceof Long) {
-            return (Long) businessId;
-        }
-        return null;
     }
 
     public boolean isTokenValid(String token, String email) {
