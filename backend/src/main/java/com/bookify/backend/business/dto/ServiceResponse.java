@@ -1,6 +1,8 @@
 package com.bookify.backend.business.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ServiceResponse {
 
@@ -8,10 +10,11 @@ public class ServiceResponse {
     private String name;
     private String description;
     private Integer durationMinutes;
-    private Double price;
+    private BigDecimal price;
     private String currency;
     private boolean active;
     private Long businessId;
+    private List<Long> locationIds;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -19,7 +22,8 @@ public class ServiceResponse {
     }
 
     public ServiceResponse(Long id, String name, String description, Integer durationMinutes,
-                           Double price, String currency, boolean active, Long businessId,
+                           BigDecimal price, String currency, boolean active, Long businessId,
+                           List<Long> locationIds,
                            LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.name = name;
@@ -29,6 +33,7 @@ public class ServiceResponse {
         this.currency = currency;
         this.active = active;
         this.businessId = businessId;
+        this.locationIds = locationIds;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -49,7 +54,7 @@ public class ServiceResponse {
         return durationMinutes;
     }
 
-    public Double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
@@ -63,6 +68,10 @@ public class ServiceResponse {
 
     public Long getBusinessId() {
         return businessId;
+    }
+
+    public List<Long> getLocationIds() {
+        return locationIds;
     }
 
     public LocalDateTime getCreatedAt() {

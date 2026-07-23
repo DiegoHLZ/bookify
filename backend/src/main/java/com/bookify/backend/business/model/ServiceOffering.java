@@ -2,6 +2,7 @@ package com.bookify.backend.business.model;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,8 +21,8 @@ public class ServiceOffering {
     @Column(nullable = false)
     private Integer durationMinutes;
 
-    @Column(nullable = false)
-    private Double price;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal price;
 
     @Column(nullable = false)
     private String currency;
@@ -69,7 +70,7 @@ public class ServiceOffering {
         return durationMinutes;
     }
 
-    public Double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
@@ -105,7 +106,7 @@ public class ServiceOffering {
         this.durationMinutes = durationMinutes;
     }
 
-    public void setPrice(Double price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 

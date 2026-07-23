@@ -30,6 +30,8 @@ The Angular/Spring Boot repository is an early generic service-booking implement
 - Users can list their active business memberships through `/api/v1/me/businesses`.
 - Location management supports create, list, detail, update and activation changes with tenant/role checks.
 - The final active location cannot be disabled; the invariant is protected with a transactional business-row lock.
+- Service prices use fixed-precision decimals rather than floating-point values.
+- Services are assigned to one or more active business locations, with database-enforced tenant consistency.
 
 The previously committed JWT value must still be considered compromised and rotated anywhere it was used.
 
@@ -37,8 +39,7 @@ The previously committed JWT value must still be considered compromised and rota
 
 1. Replace ambiguous `LocalDateTime` entity fields with the documented location-timezone policy.
 2. Decide UUID migration before durable production data exists.
-3. Replace `Double` prices with fixed-precision decimal values.
-4. Add PostGIS geography indexing, coordinate verification and verified nearby queries.
+3. Add PostGIS geography indexing, coordinate verification and verified nearby queries.
 
 ## Missing capabilities
 

@@ -3,6 +3,7 @@ package com.bookify.backend.location.repository;
 import com.bookify.backend.location.model.BusinessLocation;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,4 +18,9 @@ public interface BusinessLocationRepository extends JpaRepository<BusinessLocati
     boolean existsByBusinessIdAndNameIgnoreCaseAndIdNot(Long businessId, String name, Long id);
 
     long countByBusinessIdAndActiveTrue(Long businessId);
+
+    List<BusinessLocation> findAllByIdInAndBusinessIdAndActiveTrue(
+            Collection<Long> ids,
+            Long businessId
+    );
 }

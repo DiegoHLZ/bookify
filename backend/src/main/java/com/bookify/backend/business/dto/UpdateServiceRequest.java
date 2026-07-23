@@ -2,6 +2,9 @@ package com.bookify.backend.business.dto;
 
 import jakarta.validation.constraints.*;
 
+import java.math.BigDecimal;
+import java.util.Set;
+
 public class UpdateServiceRequest {
 
     @NotBlank(message = "Name is required")
@@ -18,7 +21,8 @@ public class UpdateServiceRequest {
 
     @NotNull(message = "Price is required")
     @DecimalMin(value = "0.0", inclusive = true, message = "Price must be greater than or equal to 0")
-    private Double price;
+    @Digits(integer = 17, fraction = 2, message = "Price must have at most 2 decimal places")
+    private BigDecimal price;
 
     @NotBlank(message = "Currency is required")
     @Pattern(regexp = "PEN|USD|EUR", message = "Currency must be PEN, USD or EUR")
@@ -26,6 +30,9 @@ public class UpdateServiceRequest {
 
     @NotNull(message = "Active is required")
     private Boolean active;
+
+    @NotEmpty(message = "At least one location is required")
+    private Set<@NotNull Long> locationIds;
 
     public UpdateServiceRequest() {
     }
@@ -42,7 +49,7 @@ public class UpdateServiceRequest {
         return durationMinutes;
     }
 
-    public Double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
@@ -52,6 +59,10 @@ public class UpdateServiceRequest {
 
     public Boolean getActive() {
         return active;
+    }
+
+    public Set<Long> getLocationIds() {
+        return locationIds;
     }
 
     public void setName(String name) {
@@ -66,7 +77,7 @@ public class UpdateServiceRequest {
         this.durationMinutes = durationMinutes;
     }
 
-    public void setPrice(Double price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 
@@ -76,5 +87,9 @@ public class UpdateServiceRequest {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public void setLocationIds(Set<Long> locationIds) {
+        this.locationIds = locationIds;
     }
 }

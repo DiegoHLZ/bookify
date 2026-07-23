@@ -60,3 +60,16 @@ Base path: `/api/v1/businesses/{businessId}/locations`
 - `PATCH /{locationId}/status` accepts `{"active": true|false}`. Requires `OWNER` or `ADMIN`.
 
 Location names are unique per business ignoring case at the application boundary. A business must retain at least one active location; status changes lock the business row so concurrent requests cannot violate that invariant.
+
+## Service offerings
+
+Base path: `/api/v1/businesses/{businessId}/services`
+
+- `POST /` creates a service and requires `OWNER` or `ADMIN`.
+- `GET /` and `GET /{serviceId}` require any active business membership.
+- `PUT /{serviceId}` updates the service and replaces its location assignments atomically.
+- `DELETE /{serviceId}` performs a soft deletion and requires `OWNER` or `ADMIN`.
+
+Create and update payloads include a non-empty `locationIds` set. Every referenced location must be active and belong to the path's business. Prices use fixed-precision decimal values with at most two fractional digits; currencies currently accept `PEN`, `USD` or `EUR`.
+
+The database stores `business_id` in `offering_locations` and uses composite foreign keys, preventing cross-tenant service/location associations even if an application-layer check is bypassed.
