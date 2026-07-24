@@ -93,3 +93,20 @@ Service-resource assignment uses:
 The `PUT` body is `{"resourceIds":[...]}` and replaces the complete assignment atomically; an empty set removes all assignments. Each resource must be active, belong to the business and be located at a site where the service is offered.
 
 Composite database constraints ensure that service, location and resource tenant identifiers remain consistent even if application validation is bypassed.
+
+## Resource schedules
+
+Base path:
+`/api/v1/businesses/{businessId}/locations/{locationId}/resources/{resourceId}`
+
+- `GET /schedule` returns the recurring weekly schedule and the location timezone.
+- `PUT /schedule` atomically replaces all recurring rules and requires `OWNER` or `ADMIN`.
+- `GET /exceptions?from=YYYY-MM-DD&to=YYYY-MM-DD` lists dated exceptions in a bounded range.
+- `PUT /exceptions/{date}` idempotently creates or replaces one exception for that date.
+- `DELETE /exceptions/{date}` removes an exception.
+
+Weekly rules use local location time, Java `DayOfWeek` names and the types `AVAILABLE` or `BREAK`. Available intervals cannot overlap. Breaks cannot overlap and each break must be fully contained in one available interval. An empty `rules` list clears the weekly schedule.
+
+Exceptions use `CLOSED`, with no times, or `CUSTOM_HOURS`, with a valid `startTime` and `endTime`. One exception per resource/date makes exception precedence deterministic. Query ranges cannot exceed 366 days.
+
+Database checks repeat the time, enum and tenant invariants. Slot generation will convert these local rules through the location's IANA timezone and persist concrete UTC instants.
