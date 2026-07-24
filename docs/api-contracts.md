@@ -109,4 +109,24 @@ Weekly rules use local location time, Java `DayOfWeek` names and the types `AVAI
 
 Exceptions use `CLOSED`, with no times, or `CUSTOM_HOURS`, with a valid `startTime` and `endTime`. One exception per resource/date makes exception precedence deterministic. Query ranges cannot exceed 366 days.
 
-Database checks repeat the time, enum and tenant invariants. Slot generation will convert these local rules through the location's IANA timezone and persist concrete UTC instants.
+Database checks repeat the time, enum and tenant invariants. Slot generation converts these
+local rules through the location's IANA timezone and returns concrete UTC instants.
+
+## Service availability
+
+`GET /api/v1/businesses/{businessId}/locations/{locationId}/services/{serviceId}/availability`
+accepts `from`, `to` (inclusive local dates) and optional `intervalMinutes` (default `15`,
+minimum `5`, maximum `1440`). The range is limited to 31 days.
+It is a customer-facing read endpoint available to any authenticated user; business membership
+is not required.
+
+The service and location must be active and linked. Only active resources explicitly assigned
+to that service and location participate. Each slot contains the resource identity, local
+start/end, and concrete UTC `startAt`/`endAt` instants. Results are ordered by UTC start and
+resource id.
+
+Recurring `AVAILABLE` periods are split by `BREAK` periods. A `CLOSED` exception removes the
+date; `CUSTOM_HOURS` replaces recurring availability while recurring breaks that intersect it
+still apply. Service duration determines whether a candidate fits, and `intervalMinutes`
+controls candidate start cadence. IANA timezone rules skip nonexistent DST local starts and
+emit both concrete instants for ambiguous repeated local starts.

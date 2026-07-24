@@ -25,4 +25,13 @@ public interface ResourceScheduleExceptionRepository
             LocalDate from,
             LocalDate to
     );
+
+    List<ResourceScheduleException>
+    findByBusinessIdAndLocationIdAndResourceIdInAndExceptionDateBetween(
+            Long businessId,
+            Long locationId,
+            List<Long> resourceIds,
+            LocalDate from,
+            LocalDate to
+    );
 }

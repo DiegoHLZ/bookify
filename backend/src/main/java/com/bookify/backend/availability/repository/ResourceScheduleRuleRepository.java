@@ -13,6 +13,12 @@ public interface ResourceScheduleRuleRepository extends JpaRepository<ResourceSc
             Long resourceId
     );
 
+    List<ResourceScheduleRule> findByBusinessIdAndLocationIdAndResourceIdIn(
+            Long businessId,
+            Long locationId,
+            List<Long> resourceIds
+    );
+
     @Modifying
     void deleteByResourceId(Long resourceId);
 }
