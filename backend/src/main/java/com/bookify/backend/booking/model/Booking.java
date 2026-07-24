@@ -70,6 +70,27 @@ public class Booking {
     @Column(name = "cancelled_at")
     private Instant cancelledAt;
 
+    @Column(name = "reschedule_count", nullable = false)
+    private Integer rescheduleCount = 0;
+
+    @Column(name = "last_rescheduled_at")
+    private Instant lastRescheduledAt;
+
+    @Column(name = "cancellation_allowed_snapshot", nullable = false)
+    private boolean cancellationAllowedSnapshot;
+
+    @Column(name = "cancellation_notice_snapshot", nullable = false)
+    private Integer cancellationNoticeSnapshot;
+
+    @Column(name = "reschedule_allowed_snapshot", nullable = false)
+    private boolean rescheduleAllowedSnapshot;
+
+    @Column(name = "reschedule_notice_snapshot", nullable = false)
+    private Integer rescheduleNoticeSnapshot;
+
+    @Column(name = "max_reschedules_snapshot", nullable = false)
+    private Integer maxReschedulesSnapshot;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -101,6 +122,11 @@ public class Booking {
         this.quantity = 1;
         this.notes = notes;
         this.idempotencyKey = idempotencyKey;
+        this.cancellationAllowedSnapshot = service.isCustomerCancellationAllowed();
+        this.cancellationNoticeSnapshot = service.getCancellationNoticeMinutes();
+        this.rescheduleAllowedSnapshot = service.isCustomerRescheduleAllowed();
+        this.rescheduleNoticeSnapshot = service.getRescheduleNoticeMinutes();
+        this.maxReschedulesSnapshot = service.getMaxReschedules();
     }
 
     public Booking(
@@ -148,6 +174,24 @@ public class Booking {
         return previous;
     }
 
+    public void reschedule(
+            BookableResource resource,
+            CapacitySession capacitySession,
+            Instant startsAt,
+            Instant endsAt,
+            Instant changedAt
+    ) {
+        if (status != BookingStatus.PENDING && status != BookingStatus.CONFIRMED) {
+            throw new IllegalStateException("Only active bookings can be rescheduled");
+        }
+        this.resource = resource;
+        this.capacitySession = capacitySession;
+        this.startsAt = startsAt;
+        this.endsAt = endsAt;
+        this.rescheduleCount++;
+        this.lastRescheduledAt = changedAt;
+    }
+
     @PrePersist
     void onCreate() {
         Instant now = Instant.now();
@@ -174,6 +218,13 @@ public class Booking {
     public String getNotes() { return notes; }
     public String getIdempotencyKey() { return idempotencyKey; }
     public Instant getCancelledAt() { return cancelledAt; }
+    public Integer getRescheduleCount() { return rescheduleCount; }
+    public Instant getLastRescheduledAt() { return lastRescheduledAt; }
+    public boolean isCancellationAllowedSnapshot() { return cancellationAllowedSnapshot; }
+    public Integer getCancellationNoticeSnapshot() { return cancellationNoticeSnapshot; }
+    public boolean isRescheduleAllowedSnapshot() { return rescheduleAllowedSnapshot; }
+    public Integer getRescheduleNoticeSnapshot() { return rescheduleNoticeSnapshot; }
+    public Integer getMaxReschedulesSnapshot() { return maxReschedulesSnapshot; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

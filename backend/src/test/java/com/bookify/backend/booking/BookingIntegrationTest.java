@@ -351,6 +351,97 @@ class BookingIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = CUSTOMER_EMAIL)
+    void reschedulesExclusiveBookingAndAuditsTheChangeIdempotently() throws Exception {
+        Long bookingId = bookingService.create(
+                CUSTOMER_EMAIL, "reschedule-booking", request(START)
+        ).id();
+        String body = """
+                {
+                  "resourceId": %d,
+                  "startsAt": "2026-07-27T15:00:00Z"
+                }
+                """.formatted(resource.getId());
+
+        mockMvc.perform(post("/api/v1/bookings/{id}/reschedule", bookingId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.startsAt").value("2026-07-27T15:00:00Z"))
+                .andExpect(jsonPath("$.rescheduleCount").value(1))
+                .andExpect(jsonPath("$.lastRescheduledAt").isNotEmpty());
+
+        mockMvc.perform(post("/api/v1/bookings/{id}/reschedule", bookingId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.rescheduleCount").value(1));
+
+        assertEquals(2, historyRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = CUSTOMER_EMAIL)
+    void enforcesCancellationNoticeAndRescheduleLimit() throws Exception {
+        service.setCancellationNoticeMinutes(10080);
+        service.setMaxReschedules(1);
+        serviceRepository.saveAndFlush(service);
+        Long bookingId = bookingService.create(
+                CUSTOMER_EMAIL, "policy-booking", request(START)
+        ).id();
+
+        mockMvc.perform(post("/api/v1/bookings/{id}/cancel", bookingId))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(
+                        "Cancellation notice period has expired"
+                ));
+
+        mockMvc.perform(post("/api/v1/bookings/{id}/reschedule", bookingId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"resourceId":%d,"startsAt":"2026-07-27T15:00:00Z"}
+                                """.formatted(resource.getId())))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/bookings/{id}/reschedule", bookingId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"resourceId":%d,"startsAt":"2026-07-27T16:00:00Z"}
+                                """.formatted(resource.getId())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(
+                        "Maximum number of reschedules has been reached"
+                ));
+    }
+
+    @Test
+    @WithMockUser(username = CUSTOMER_EMAIL)
+    void rejectsCustomerActionsWhenPoliciesAreDisabled() throws Exception {
+        service.setCustomerCancellationAllowed(false);
+        service.setCustomerRescheduleAllowed(false);
+        serviceRepository.saveAndFlush(service);
+        Long bookingId = bookingService.create(
+                CUSTOMER_EMAIL, "disabled-policy", request(START)
+        ).id();
+
+        mockMvc.perform(post("/api/v1/bookings/{id}/cancel", bookingId))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(
+                        "Customer cancellation is disabled for this service"
+                ));
+
+        mockMvc.perform(post("/api/v1/bookings/{id}/reschedule", bookingId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"resourceId":%d,"startsAt":"2026-07-27T15:00:00Z"}
+                                """.formatted(resource.getId())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(
+                        "Customer rescheduling is disabled for this service"
+                ));
+    }
+
+    @Test
     void concurrentRequestsCannotBookSameResource() throws Exception {
         ExecutorService executor = Executors.newFixedThreadPool(2);
         CountDownLatch ready = new CountDownLatch(2);

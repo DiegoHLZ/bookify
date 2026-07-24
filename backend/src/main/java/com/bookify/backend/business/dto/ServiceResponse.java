@@ -15,6 +15,11 @@ public class ServiceResponse {
     private String currency;
     private boolean active;
     private BookingMode bookingMode;
+    private boolean customerCancellationAllowed;
+    private Integer cancellationNoticeMinutes;
+    private boolean customerRescheduleAllowed;
+    private Integer rescheduleNoticeMinutes;
+    private Integer maxReschedules;
     private Long businessId;
     private List<Long> locationIds;
     private LocalDateTime createdAt;
@@ -25,7 +30,13 @@ public class ServiceResponse {
 
     public ServiceResponse(Long id, String name, String description, Integer durationMinutes,
                            BigDecimal price, String currency, boolean active,
-                           BookingMode bookingMode, Long businessId,
+                           BookingMode bookingMode,
+                           boolean customerCancellationAllowed,
+                           Integer cancellationNoticeMinutes,
+                           boolean customerRescheduleAllowed,
+                           Integer rescheduleNoticeMinutes,
+                           Integer maxReschedules,
+                           Long businessId,
                            List<Long> locationIds,
                            LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
@@ -36,6 +47,11 @@ public class ServiceResponse {
         this.currency = currency;
         this.active = active;
         this.bookingMode = bookingMode;
+        this.customerCancellationAllowed = customerCancellationAllowed;
+        this.cancellationNoticeMinutes = cancellationNoticeMinutes;
+        this.customerRescheduleAllowed = customerRescheduleAllowed;
+        this.rescheduleNoticeMinutes = rescheduleNoticeMinutes;
+        this.maxReschedules = maxReschedules;
         this.businessId = businessId;
         this.locationIds = locationIds;
         this.createdAt = createdAt;
@@ -73,6 +89,11 @@ public class ServiceResponse {
     public BookingMode getBookingMode() {
         return bookingMode;
     }
+    public boolean isCustomerCancellationAllowed() { return customerCancellationAllowed; }
+    public Integer getCancellationNoticeMinutes() { return cancellationNoticeMinutes; }
+    public boolean isCustomerRescheduleAllowed() { return customerRescheduleAllowed; }
+    public Integer getRescheduleNoticeMinutes() { return rescheduleNoticeMinutes; }
+    public Integer getMaxReschedules() { return maxReschedules; }
 
     public Long getBusinessId() {
         return businessId;

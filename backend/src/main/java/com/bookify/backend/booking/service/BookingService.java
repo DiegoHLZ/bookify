@@ -6,6 +6,7 @@ import com.bookify.backend.availability.service.AvailabilitySlotService;
 import com.bookify.backend.booking.dto.BookingResponse;
 import com.bookify.backend.booking.dto.BookingStatusHistoryResponse;
 import com.bookify.backend.booking.dto.CreateBookingRequest;
+import com.bookify.backend.booking.dto.RescheduleBookingRequest;
 import com.bookify.backend.booking.model.Booking;
 import com.bookify.backend.booking.model.BookingStatus;
 import com.bookify.backend.booking.model.BookingStatusHistory;
@@ -160,6 +161,7 @@ public class BookingService {
                 .findForUpdateByIdAndCustomerId(bookingId, customer.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
         BookingStatus previous = booking.getStatus();
+        requireCustomerCancellationAllowed(booking, Instant.now());
         try {
             booking.cancel(Instant.now());
         } catch (IllegalStateException exception) {
@@ -176,6 +178,117 @@ public class BookingService {
                     "Cancelled by customer"
             ));
         }
+        return BookingResponse.from(saved);
+    }
+
+    @Transactional
+    public BookingResponse reschedule(
+            Long bookingId,
+            String customerEmail,
+            RescheduleBookingRequest request
+    ) {
+        User customer = userRepository.findForUpdateByEmailIgnoreCase(customerEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+        Booking booking = bookingRepository
+                .findForUpdateByIdAndCustomerId(bookingId, customer.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+        if (sameTarget(booking, request)) {
+            return BookingResponse.from(booking);
+        }
+        Instant now = Instant.now();
+        requireCustomerRescheduleAllowed(booking, now);
+
+        BookableResource resource = resourceRepository
+                .findForUpdateByIdAndBusinessIdAndLocationId(
+                        request.resourceId(),
+                        booking.getBusiness().getId(),
+                        booking.getLocation().getId()
+                )
+                .orElseThrow(() -> new ResourceNotFoundException("Bookable resource not found"));
+        if (!resource.isActive() || !offeringResourceRepository
+                .existsByBusinessIdAndServiceIdAndLocationIdAndResourceId(
+                        booking.getBusiness().getId(),
+                        booking.getService().getId(),
+                        booking.getLocation().getId(),
+                        resource.getId()
+                )) {
+            throw new ResourceNotFoundException("Resource is not assigned to this service");
+        }
+
+        Instant oldStart = booking.getStartsAt();
+        Long oldResourceId = booking.getResource().getId();
+        CapacitySession oldSession = booking.getCapacitySession();
+        CapacitySession newSession = null;
+        Instant newEnd;
+
+        if (booking.getService().getBookingMode() == BookingMode.CAPACITY_SESSION) {
+            if (request.capacitySessionId() == null) {
+                throw new BadRequestException("Capacity session id is required");
+            }
+            newSession = capacitySessionRepository
+                    .findForUpdateByIdAndBusinessId(
+                            request.capacitySessionId(), booking.getBusiness().getId()
+                    )
+                    .orElseThrow(() -> new ResourceNotFoundException("Capacity session not found"));
+            boolean matches = newSession.getLocation().getId().equals(booking.getLocation().getId())
+                    && newSession.getService().getId().equals(booking.getService().getId())
+                    && newSession.getResource().getId().equals(resource.getId())
+                    && newSession.getStartsAt().equals(request.startsAt())
+                    && newSession.getStatus() == CapacitySessionStatus.OPEN;
+            if (!matches) {
+                throw new BookingConflictException("Capacity session does not match request");
+            }
+            try {
+                newSession.reserve(booking.getQuantity());
+            } catch (IllegalStateException exception) {
+                throw new BookingConflictException(exception.getMessage());
+            }
+            newEnd = newSession.getEndsAt();
+        } else {
+            if (request.capacitySessionId() != null) {
+                throw new BadRequestException(
+                        "Exclusive-resource rescheduling does not accept a capacity session"
+                );
+            }
+            newEnd = request.startsAt().plus(
+                    booking.getService().getDurationMinutes(), ChronoUnit.MINUTES
+            );
+            if (bookingRepository.existsActiveOverlapExcluding(
+                    resource.getId(), booking.getId(), ACTIVE_STATUSES,
+                    request.startsAt(), newEnd
+            )) {
+                throw new BookingConflictException("Resource is already booked");
+            }
+            requireGeneratedSlot(new CreateBookingRequest(
+                    booking.getBusiness().getId(),
+                    booking.getLocation().getId(),
+                    booking.getService().getId(),
+                    resource.getId(),
+                    request.startsAt(),
+                    null,
+                    1,
+                    booking.getNotes()
+            ), booking.getLocation(), newEnd);
+        }
+
+        if (oldSession != null) {
+            CapacitySession lockedOld = capacitySessionRepository
+                    .findForUpdateByIdAndBusinessId(
+                            oldSession.getId(), booking.getBusiness().getId()
+                    )
+                    .orElseThrow(() -> new ResourceNotFoundException("Capacity session not found"));
+            lockedOld.release(booking.getQuantity());
+        }
+        booking.reschedule(resource, newSession, request.startsAt(), newEnd, now);
+        Booking saved = bookingRepository.saveAndFlush(booking);
+        historyRepository.save(new BookingStatusHistory(
+                saved,
+                customer,
+                saved.getStatus(),
+                saved.getStatus(),
+                "Rescheduled from " + oldStart + " (resource " + oldResourceId
+                        + ") to " + request.startsAt() + " (resource " + resource.getId() + ")"
+        ));
         return BookingResponse.from(saved);
     }
 
@@ -356,6 +469,48 @@ public class BookingService {
         if (!exists) {
             throw new BookingConflictException("Requested time is not available");
         }
+    }
+
+    private void requireCustomerCancellationAllowed(Booking booking, Instant now) {
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            return;
+        }
+        if (!booking.isCancellationAllowedSnapshot()) {
+            throw new BadRequestException("Customer cancellation is disabled for this service");
+        }
+        Instant deadline = booking.getStartsAt().minus(
+                booking.getCancellationNoticeSnapshot(), ChronoUnit.MINUTES
+        );
+        if (now.isAfter(deadline)) {
+            throw new BadRequestException("Cancellation notice period has expired");
+        }
+    }
+
+    private void requireCustomerRescheduleAllowed(Booking booking, Instant now) {
+        if (booking.getStatus() != BookingStatus.PENDING
+                && booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new BadRequestException("Only active bookings can be rescheduled");
+        }
+        if (!booking.isRescheduleAllowedSnapshot()) {
+            throw new BadRequestException("Customer rescheduling is disabled for this service");
+        }
+        if (booking.getRescheduleCount() >= booking.getMaxReschedulesSnapshot()) {
+            throw new BadRequestException("Maximum number of reschedules has been reached");
+        }
+        Instant deadline = booking.getStartsAt().minus(
+                booking.getRescheduleNoticeSnapshot(), ChronoUnit.MINUTES
+        );
+        if (now.isAfter(deadline)) {
+            throw new BadRequestException("Reschedule notice period has expired");
+        }
+    }
+
+    private boolean sameTarget(Booking booking, RescheduleBookingRequest request) {
+        Long sessionId = booking.getCapacitySession() == null
+                ? null : booking.getCapacitySession().getId();
+        return booking.getResource().getId().equals(request.resourceId())
+                && booking.getStartsAt().equals(request.startsAt())
+                && java.util.Objects.equals(sessionId, request.capacitySessionId());
     }
 
     private User requireUser(String email) {

@@ -58,4 +58,21 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("startsAt") Instant startsAt,
             @Param("endsAt") Instant endsAt
     );
+
+    @Query("""
+            select (count(booking) > 0)
+            from Booking booking
+            where booking.resource.id = :resourceId
+              and booking.id <> :bookingId
+              and booking.status in :statuses
+              and booking.startsAt < :endsAt
+              and booking.endsAt > :startsAt
+            """)
+    boolean existsActiveOverlapExcluding(
+            @Param("resourceId") Long resourceId,
+            @Param("bookingId") Long bookingId,
+            @Param("statuses") Collection<BookingStatus> statuses,
+            @Param("startsAt") Instant startsAt,
+            @Param("endsAt") Instant endsAt
+    );
 }

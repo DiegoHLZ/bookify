@@ -57,6 +57,14 @@ public class ServiceOfferingService {
         service.setBusiness(business);
         service.setActive(true);
         service.setBookingMode(defaultMode(request.getBookingMode()));
+        applyPolicies(
+                service,
+                defaultBoolean(request.getCustomerCancellationAllowed(), true),
+                defaultInteger(request.getCancellationNoticeMinutes(), 0),
+                defaultBoolean(request.getCustomerRescheduleAllowed(), true),
+                defaultInteger(request.getRescheduleNoticeMinutes(), 0),
+                defaultInteger(request.getMaxReschedules(), 1)
+        );
 
         serviceOfferingRepository.save(service);
         saveLocationLinks(business, service, locations);
@@ -92,6 +100,26 @@ public class ServiceOfferingService {
         service.setCurrency(request.getCurrency());
         service.setActive(request.getActive());
         service.setBookingMode(defaultMode(request.getBookingMode()));
+        applyPolicies(
+                service,
+                defaultBoolean(
+                        request.getCustomerCancellationAllowed(),
+                        service.isCustomerCancellationAllowed()
+                ),
+                defaultInteger(
+                        request.getCancellationNoticeMinutes(),
+                        service.getCancellationNoticeMinutes()
+                ),
+                defaultBoolean(
+                        request.getCustomerRescheduleAllowed(),
+                        service.isCustomerRescheduleAllowed()
+                ),
+                defaultInteger(
+                        request.getRescheduleNoticeMinutes(),
+                        service.getRescheduleNoticeMinutes()
+                ),
+                defaultInteger(request.getMaxReschedules(), service.getMaxReschedules())
+        );
 
         offeringLocationRepository.deleteByServiceId(serviceId);
         offeringLocationRepository.flush();
@@ -146,6 +174,11 @@ public class ServiceOfferingService {
                 service.getCurrency(),
                 service.isActive(),
                 service.getBookingMode(),
+                service.isCustomerCancellationAllowed(),
+                service.getCancellationNoticeMinutes(),
+                service.isCustomerRescheduleAllowed(),
+                service.getRescheduleNoticeMinutes(),
+                service.getMaxReschedules(),
                 service.getBusiness().getId(),
                 locationIds,
                 service.getCreatedAt(),
@@ -162,5 +195,28 @@ public class ServiceOfferingService {
 
     private BookingMode defaultMode(BookingMode mode) {
         return mode == null ? BookingMode.EXCLUSIVE_RESOURCE : mode;
+    }
+
+    private void applyPolicies(
+            ServiceOffering service,
+            boolean cancellationAllowed,
+            int cancellationNotice,
+            boolean rescheduleAllowed,
+            int rescheduleNotice,
+            int maxReschedules
+    ) {
+        service.setCustomerCancellationAllowed(cancellationAllowed);
+        service.setCancellationNoticeMinutes(cancellationNotice);
+        service.setCustomerRescheduleAllowed(rescheduleAllowed);
+        service.setRescheduleNoticeMinutes(rescheduleNotice);
+        service.setMaxReschedules(maxReschedules);
+    }
+
+    private boolean defaultBoolean(Boolean value, boolean fallback) {
+        return value == null ? fallback : value;
+    }
+
+    private int defaultInteger(Integer value, int fallback) {
+        return value == null ? fallback : value;
     }
 }

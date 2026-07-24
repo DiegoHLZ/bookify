@@ -4,6 +4,7 @@ import com.bookify.backend.booking.dto.BookingResponse;
 import com.bookify.backend.booking.dto.BookingStatusHistoryResponse;
 import com.bookify.backend.booking.dto.BookingStatusRequest;
 import com.bookify.backend.booking.dto.CreateBookingRequest;
+import com.bookify.backend.booking.dto.RescheduleBookingRequest;
 import com.bookify.backend.booking.service.BookingService;
 import com.bookify.backend.common.SecurityUtils;
 import com.bookify.backend.tenancy.service.BusinessAccessService;
@@ -55,6 +56,16 @@ public class BookingController {
     @PostMapping("/bookings/{bookingId}/cancel")
     public BookingResponse cancel(@PathVariable Long bookingId) {
         return bookingService.cancel(bookingId, SecurityUtils.getCurrentUserEmail());
+    }
+
+    @PostMapping("/bookings/{bookingId}/reschedule")
+    public BookingResponse reschedule(
+            @PathVariable Long bookingId,
+            @Valid @RequestBody RescheduleBookingRequest request
+    ) {
+        return bookingService.reschedule(
+                bookingId, SecurityUtils.getCurrentUserEmail(), request
+        );
     }
 
     @GetMapping("/businesses/{businessId}/bookings")

@@ -34,6 +34,21 @@ public class ServiceOffering {
     @Column(name = "booking_mode", nullable = false, length = 30)
     private BookingMode bookingMode = BookingMode.EXCLUSIVE_RESOURCE;
 
+    @Column(name = "customer_cancellation_allowed", nullable = false)
+    private boolean customerCancellationAllowed = true;
+
+    @Column(name = "cancellation_notice_minutes", nullable = false)
+    private Integer cancellationNoticeMinutes = 0;
+
+    @Column(name = "customer_reschedule_allowed", nullable = false)
+    private boolean customerRescheduleAllowed = true;
+
+    @Column(name = "reschedule_notice_minutes", nullable = false)
+    private Integer rescheduleNoticeMinutes = 0;
+
+    @Column(name = "max_reschedules", nullable = false)
+    private Integer maxReschedules = 1;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "business_id", nullable = false)
     private Business business;
@@ -90,6 +105,12 @@ public class ServiceOffering {
         return bookingMode;
     }
 
+    public boolean isCustomerCancellationAllowed() { return customerCancellationAllowed; }
+    public Integer getCancellationNoticeMinutes() { return cancellationNoticeMinutes; }
+    public boolean isCustomerRescheduleAllowed() { return customerRescheduleAllowed; }
+    public Integer getRescheduleNoticeMinutes() { return rescheduleNoticeMinutes; }
+    public Integer getMaxReschedules() { return maxReschedules; }
+
     public Business getBusiness() {
         return business;
     }
@@ -128,6 +149,26 @@ public class ServiceOffering {
 
     public void setBookingMode(BookingMode bookingMode) {
         this.bookingMode = bookingMode;
+    }
+
+    public void setCustomerCancellationAllowed(boolean value) {
+        this.customerCancellationAllowed = value;
+    }
+
+    public void setCancellationNoticeMinutes(Integer value) {
+        this.cancellationNoticeMinutes = value;
+    }
+
+    public void setCustomerRescheduleAllowed(boolean value) {
+        this.customerRescheduleAllowed = value;
+    }
+
+    public void setRescheduleNoticeMinutes(Integer value) {
+        this.rescheduleNoticeMinutes = value;
+    }
+
+    public void setMaxReschedules(Integer value) {
+        this.maxReschedules = value;
     }
 
     public void setBusiness(Business business) {

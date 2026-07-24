@@ -29,6 +29,13 @@ public record BookingResponse(
         Integer quantity,
         String notes,
         Instant cancelledAt,
+        Integer rescheduleCount,
+        Instant lastRescheduledAt,
+        boolean cancellationAllowed,
+        Integer cancellationNoticeMinutes,
+        boolean rescheduleAllowed,
+        Integer rescheduleNoticeMinutes,
+        Integer maxReschedules,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -56,6 +63,13 @@ public record BookingResponse(
                 booking.getQuantity(),
                 booking.getNotes(),
                 booking.getCancelledAt(),
+                booking.getRescheduleCount(),
+                booking.getLastRescheduledAt(),
+                booking.isCancellationAllowedSnapshot(),
+                booking.getCancellationNoticeSnapshot(),
+                booking.isRescheduleAllowedSnapshot(),
+                booking.getRescheduleNoticeSnapshot(),
+                booking.getMaxReschedulesSnapshot(),
                 booking.getCreatedAt(),
                 booking.getUpdatedAt()
         );

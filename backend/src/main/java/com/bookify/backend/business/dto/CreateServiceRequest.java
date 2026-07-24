@@ -34,6 +34,12 @@ public class CreateServiceRequest {
 
     private BookingMode bookingMode;
 
+    private Boolean customerCancellationAllowed;
+    @Min(0) @Max(525600) private Integer cancellationNoticeMinutes;
+    private Boolean customerRescheduleAllowed;
+    @Min(0) @Max(525600) private Integer rescheduleNoticeMinutes;
+    @Min(0) @Max(100) private Integer maxReschedules;
+
     public CreateServiceRequest() {
     }
 
@@ -64,6 +70,11 @@ public class CreateServiceRequest {
     public BookingMode getBookingMode() {
         return bookingMode;
     }
+    public Boolean getCustomerCancellationAllowed() { return customerCancellationAllowed; }
+    public Integer getCancellationNoticeMinutes() { return cancellationNoticeMinutes; }
+    public Boolean getCustomerRescheduleAllowed() { return customerRescheduleAllowed; }
+    public Integer getRescheduleNoticeMinutes() { return rescheduleNoticeMinutes; }
+    public Integer getMaxReschedules() { return maxReschedules; }
 
     public void setName(String name) {
         this.name = name;
@@ -92,4 +103,9 @@ public class CreateServiceRequest {
     public void setBookingMode(BookingMode bookingMode) {
         this.bookingMode = bookingMode;
     }
+    public void setCustomerCancellationAllowed(Boolean value) { customerCancellationAllowed = value; }
+    public void setCancellationNoticeMinutes(Integer value) { cancellationNoticeMinutes = value; }
+    public void setCustomerRescheduleAllowed(Boolean value) { customerRescheduleAllowed = value; }
+    public void setRescheduleNoticeMinutes(Integer value) { rescheduleNoticeMinutes = value; }
+    public void setMaxReschedules(Integer value) { maxReschedules = value; }
 }
