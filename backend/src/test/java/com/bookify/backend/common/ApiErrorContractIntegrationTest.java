@@ -64,6 +64,13 @@ class ApiErrorContractIntegrationTest {
     }
 
     @Test
+    void publicDiscoveryDoesNotRequireAuthentication() throws Exception {
+        mockMvc.perform(get("/api/v1/discovery/businesses/missing-business"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"));
+    }
+
+    @Test
     void validationErrorsIncludeFieldsAndRequestContext() throws Exception {
         mockMvc.perform(post("/api/auth/register")
                         .header("X-Correlation-ID", "registration-1")

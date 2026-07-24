@@ -10,5 +10,7 @@ public interface ServiceOfferingRepository extends JpaRepository<ServiceOffering
 
     List<ServiceOffering> findByBusinessIdAndActiveTrue(Long businessId);
 
+    List<ServiceOffering> findByBusinessIdAndActiveTrueOrderByNameAscIdAsc(Long businessId);
+
     Optional<ServiceOffering> findByIdAndBusinessId(Long id, Long businessId);
 }

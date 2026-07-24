@@ -13,6 +13,7 @@ public interface NearbyLocationProjection {
     String getAddress();
     String getCity();
     String getCountryCode();
+    String getTimezone();
     BigDecimal getLatitude();
     BigDecimal getLongitude();
     Double getDistanceMeters();

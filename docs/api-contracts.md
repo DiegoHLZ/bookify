@@ -30,6 +30,22 @@ return `UNAUTHORIZED`; authorization failures return `FORBIDDEN`. Unexpected fai
 `INTERNAL_ERROR` with a generic message, while internal details are restricted to server logs.
 The API accepts Bearer JWT authentication only; HTTP Basic and form login are disabled.
 
+Discovery endpoints under `/api/v1/discovery/**` are intentionally public.
+
+## Deterministic discovery
+
+`GET /api/v1/discovery/search` requires `latitude` and `longitude` and accepts `radiusKm`,
+`text`, `categoryCode`, `minRating`, `availableAt`, `page` and `size`. Text is
+case/accent-insensitive. When supplied, `availableAt` is an ISO local date-time evaluated in
+each location timezone; results include the service IDs that can start exactly then.
+
+Pages use the deterministic ordering distance, rating average, rating count and location ID.
+`size` is 1–100 and `page` is 0–100. `hasNext` indicates whether another page exists.
+
+`GET /api/v1/discovery/businesses/{slug}` returns the public business profile, verified
+active locations and active services assigned to them. Inactive or unverified catalog data
+is never exposed.
+
 ## Transactional business onboarding
 
 `POST /api/v1/businesses`

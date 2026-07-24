@@ -27,4 +27,17 @@ public interface OfferingLocationRepository extends JpaRepository<OfferingLocati
             Long serviceId,
             Long locationId
     );
+
+    @Query("""
+            select link.service.id
+            from OfferingLocation link
+            where link.business.id = :businessId
+              and link.location.id = :locationId
+              and link.service.active = true
+            order by link.service.id
+            """)
+    List<Long> findActiveServiceIdsAtLocation(
+            @Param("businessId") Long businessId,
+            @Param("locationId") Long locationId
+    );
 }

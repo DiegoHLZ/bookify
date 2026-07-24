@@ -28,6 +28,10 @@ public interface BusinessLocationRepository extends JpaRepository<BusinessLocati
             Long businessId
     );
 
+    List<BusinessLocation> findByBusinessIdAndActiveTrueAndCoordinatesVerifiedTrueOrderByIdAsc(
+            Long businessId
+    );
+
     @Query(value = """
             SELECT
                 b.id AS "businessId",
@@ -40,6 +44,7 @@ public interface BusinessLocationRepository extends JpaRepository<BusinessLocati
                 l.address AS address,
                 l.city AS city,
                 l.country_code AS "countryCode",
+                l.timezone AS timezone,
                 l.latitude AS latitude,
                 l.longitude AS longitude,
                 ST_Distance(
@@ -53,6 +58,33 @@ public interface BusinessLocationRepository extends JpaRepository<BusinessLocati
               AND b.active = TRUE
               AND (:categoryCode IS NULL OR b.category_code = :categoryCode)
               AND b.rating_average >= :minRating
+              AND (
+                  :searchText IS NULL
+                  OR LOWER(bookify_unaccent(
+                      b.name || ' ' || COALESCE(b.description, '')
+                  ))
+                        LIKE CONCAT('%', LOWER(bookify_unaccent(:searchText)), '%')
+                  OR LOWER(bookify_unaccent(
+                      l.name || ' ' || l.city || ' ' || l.address
+                  ))
+                        LIKE CONCAT('%', LOWER(bookify_unaccent(:searchText)), '%')
+                  OR EXISTS (
+                      SELECT 1
+                      FROM offering_locations text_ol
+                      JOIN services text_service ON text_service.id = text_ol.service_id
+                      WHERE text_ol.business_id = b.id
+                        AND text_ol.location_id = l.id
+                        AND text_service.active = TRUE
+                        AND (
+                            LOWER(bookify_unaccent(
+                                text_service.name || ' '
+                                    || COALESCE(text_service.description, '')
+                            )) LIKE CONCAT(
+                                '%', LOWER(bookify_unaccent(:searchText)), '%'
+                            )
+                        )
+                  )
+              )
               AND EXISTS (
                   SELECT 1
                   FROM offering_locations ol
@@ -68,14 +100,17 @@ public interface BusinessLocationRepository extends JpaRepository<BusinessLocati
               )
             ORDER BY "distanceMeters" ASC, b.rating_average DESC,
                      b.rating_count DESC, l.id ASC
+            OFFSET :resultOffset
             LIMIT :resultLimit
             """, nativeQuery = true)
-    List<NearbyLocationProjection> findVerifiedNearby(
+    List<NearbyLocationProjection> searchVerifiedNearby(
             @Param("latitude") double latitude,
             @Param("longitude") double longitude,
             @Param("radiusMeters") double radiusMeters,
             @Param("categoryCode") String categoryCode,
             @Param("minRating") BigDecimal minRating,
+            @Param("searchText") String searchText,
+            @Param("resultOffset") int resultOffset,
             @Param("resultLimit") int resultLimit
     );
 }

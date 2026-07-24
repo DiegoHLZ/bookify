@@ -104,12 +104,14 @@ class PostgreSqlInfrastructureIntegrationTest {
     void executesVerifiedNearbyQueryAgainstPostGis() {
         insertDiscoveryProbe();
 
-        List<NearbyLocationProjection> results = locationRepository.findVerifiedNearby(
+        List<NearbyLocationProjection> results = locationRepository.searchVerifiedNearby(
                 -12.046374,
                 -77.042793,
                 1_000,
                 "PROFESSIONAL_SERVICES",
                 new BigDecimal("4.5"),
+                "masaje",
+                0,
                 10
         );
 
@@ -153,7 +155,7 @@ class PostgreSqlInfrastructureIntegrationTest {
                         business_id, created_at, updated_at
                     )
                     SELECT
-                        'Probe service', 30, 10.00, 'PEN', TRUE, id, NOW(), NOW()
+                        'Masáje terapéutico', 30, 10.00, 'PEN', TRUE, id, NOW(), NOW()
                     FROM business
                     RETURNING business_id, id
                 )
