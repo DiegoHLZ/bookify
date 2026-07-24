@@ -5,6 +5,7 @@ Spring Boot API for Bookify.
 ## Requirements
 
 - Java 17 or newer.
+- Docker Desktop running when executing the complete test suite.
 - PostgreSQL 16 for local development (the root Compose file uses PostGIS).
 
 ## Local setup
@@ -38,10 +39,14 @@ The backend validates the authenticated user's active membership instead of trus
 Run:
 
 ```bash
-./mvnw test
+./mvnw verify
 ```
 
-Tests use an in-memory PostgreSQL-compatible H2 profile for fast context validation. PostgreSQL/PostGIS integration and concurrency tests will be added with the first transactional booking slice.
+Most integration tests use an in-memory PostgreSQL-compatible H2 profile for fast feedback.
+The infrastructure suite starts an isolated `postgis/postgis:16-3.4` container with
+Testcontainers, applies every Flyway migration from an empty schema and verifies PostGIS,
+GiST indexes, exclusion constraints and the native nearby-discovery query. The container and
+its data are removed automatically after the test JVM exits.
 
 ## Development-only endpoints
 

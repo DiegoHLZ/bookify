@@ -20,8 +20,8 @@ Exit: clean checkout builds/tests; schema is reproducible; no committed credenti
 
 Status: **in progress**. Environment-backed secrets, Maven Wrapper repair, Flyway baseline,
 schema validation, health probes, backend CI, local PostGIS Compose infrastructure, safe
-error envelopes, correlation IDs and request outcome logs are complete. Metrics dashboards
-and automated PostgreSQL integration tests remain.
+error envelopes, correlation IDs, request outcome logs and containerized PostgreSQL/PostGIS
+integration tests are complete. Metrics dashboards and production load baselines remain.
 
 ## Phase 2 — Identity, businesses and locations
 
