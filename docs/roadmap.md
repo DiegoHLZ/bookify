@@ -18,7 +18,10 @@ Exit: no unresolved product-domain ambiguity; capacity, location, time and tenan
 
 Exit: clean checkout builds/tests; schema is reproducible; no committed credentials.
 
-Status: **in progress**. Environment-backed secrets, Maven Wrapper repair, Flyway baseline, schema validation, health probes, backend CI and local PostGIS Compose infrastructure are complete. Full observability and PostgreSQL integration tests remain.
+Status: **in progress**. Environment-backed secrets, Maven Wrapper repair, Flyway baseline,
+schema validation, health probes, backend CI, local PostGIS Compose infrastructure, safe
+error envelopes, correlation IDs and request outcome logs are complete. Metrics dashboards
+and automated PostgreSQL integration tests remain.
 
 ## Phase 2 — Identity, businesses and locations
 
@@ -28,7 +31,12 @@ Status: **in progress**. Environment-backed secrets, Maven Wrapper repair, Flywa
 
 Exit: cross-tenant tests pass and nearby queries use correct geospatial calculations.
 
-Status: **in progress**. Customer registration is tenant-independent, JWTs no longer embed a business ID, and service-management access is protected by active business memberships. Transactional onboarding creates a categorized business, first location and `OWNER` membership. Additional-location CRUD, role enforcement, cross-tenant isolation and the last-active-location invariant have integration coverage. Coordinate verification and PostGIS nearby queries remain.
+Status: **complete**. Customer registration is tenant-independent, JWTs no longer embed a
+business ID, and service-management access is protected by active business memberships.
+Transactional onboarding creates a categorized business, first location and `OWNER`
+membership. Additional-location CRUD, role enforcement, cross-tenant isolation and the
+last-active-location invariant have integration coverage. Verified coordinates and indexed
+PostGIS nearby queries complete the location/discovery foundation.
 
 ## Phase 3 — Catalog and booking modes
 
@@ -49,10 +57,10 @@ Status: **complete**. Offerings use fixed-precision prices and are assigned atom
 
 Exit: discovery → booking works end to end and cannot overbook under concurrent load.
 
-Status: **in progress**. Exclusive-resource bookings now support idempotent creation,
-customer cancellation, customer/business views, availability exclusion, two-layer
-concurrency protection and audited business state transitions. Shared-capacity sessions and
-configurable cancellation policies remain.
+Status: **complete**. Exclusive-resource bookings support idempotent creation, customer
+cancellation and rescheduling, customer/business views, availability exclusion, two-layer
+concurrency protection, audited state transitions and configurable policy snapshots.
+Shared-capacity sessions use transactional capacity locking.
 
 ## Phase 5 — Reviews and baseline ranking
 
@@ -61,6 +69,10 @@ configurable cancellation policies remain.
 - Deterministic ranking using eligibility, distance, rating confidence and availability.
 
 Exit: ranking is explainable and works without AI.
+
+Status: **complete**. Completed bookings can produce one verified review, aggregate ratings
+are maintained transactionally and deterministic nearby discovery orders eligible locations
+by exact distance, rating average, rating count and stable identifiers.
 
 ## Phase 6 — NVIDIA-assisted discovery experiment
 

@@ -2,6 +2,34 @@
 
 All `/api/v1/**` endpoints require `Authorization: Bearer <jwt>` unless explicitly documented otherwise.
 
+## Errors and request correlation
+
+Every response includes `X-Correlation-ID`. Clients may send a correlation ID containing
+1–100 letters, digits, dots, underscores or hyphens; invalid or missing values are replaced
+with a server-generated UUID. Include this value in support reports.
+
+API errors use a stable JSON envelope:
+
+```json
+{
+  "timestamp": "2026-07-23T22:30:00Z",
+  "status": 400,
+  "error": "Bad Request",
+  "code": "VALIDATION_ERROR",
+  "message": "One or more fields are invalid",
+  "path": "/api/auth/register",
+  "correlationId": "registration-1",
+  "validationErrors": {
+    "email": "must not be blank"
+  }
+}
+```
+
+`validationErrors` is present only for field-validation failures. Authentication failures
+return `UNAUTHORIZED`; authorization failures return `FORBIDDEN`. Unexpected failures return
+`INTERNAL_ERROR` with a generic message, while internal details are restricted to server logs.
+The API accepts Bearer JWT authentication only; HTTP Basic and form login are disabled.
+
 ## Transactional business onboarding
 
 `POST /api/v1/businesses`
