@@ -2,6 +2,7 @@ package com.bookify.backend.booking.model;
 
 import com.bookify.backend.business.model.Business;
 import com.bookify.backend.business.model.ServiceOffering;
+import com.bookify.backend.capacity.model.CapacitySession;
 import com.bookify.backend.location.model.BusinessLocation;
 import com.bookify.backend.resource.model.BookableResource;
 import com.bookify.backend.user.model.User;
@@ -38,6 +39,10 @@ public class Booking {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "resource_id", nullable = false)
     private BookableResource resource;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "capacity_session_id")
+    private CapacitySession capacitySession;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "customer_id", nullable = false)
@@ -98,6 +103,17 @@ public class Booking {
         this.idempotencyKey = idempotencyKey;
     }
 
+    public Booking(
+            Business business, BusinessLocation location, ServiceOffering service,
+            BookableResource resource, CapacitySession capacitySession, User customer,
+            int quantity, String notes, String idempotencyKey
+    ) {
+        this(business, location, service, resource, customer,
+                capacitySession.getStartsAt(), capacitySession.getEndsAt(), notes, idempotencyKey);
+        this.capacitySession = capacitySession;
+        this.quantity = quantity;
+    }
+
     public void cancel(Instant cancelledAt) {
         if (status == BookingStatus.CANCELLED) {
             return;
@@ -149,6 +165,7 @@ public class Booking {
     public BusinessLocation getLocation() { return location; }
     public ServiceOffering getService() { return service; }
     public BookableResource getResource() { return resource; }
+    public CapacitySession getCapacitySession() { return capacitySession; }
     public User getCustomer() { return customer; }
     public Instant getStartsAt() { return startsAt; }
     public Instant getEndsAt() { return endsAt; }

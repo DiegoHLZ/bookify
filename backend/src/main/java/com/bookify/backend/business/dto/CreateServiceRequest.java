@@ -1,5 +1,6 @@
 package com.bookify.backend.business.dto;
 
+import com.bookify.backend.business.model.BookingMode;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
@@ -31,6 +32,8 @@ public class CreateServiceRequest {
     @NotEmpty(message = "At least one location is required")
     private Set<@NotNull Long> locationIds;
 
+    private BookingMode bookingMode;
+
     public CreateServiceRequest() {
     }
 
@@ -58,6 +61,10 @@ public class CreateServiceRequest {
         return locationIds;
     }
 
+    public BookingMode getBookingMode() {
+        return bookingMode;
+    }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -80,5 +87,9 @@ public class CreateServiceRequest {
 
     public void setLocationIds(Set<Long> locationIds) {
         this.locationIds = locationIds;
+    }
+
+    public void setBookingMode(BookingMode bookingMode) {
+        this.bookingMode = bookingMode;
     }
 }

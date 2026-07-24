@@ -30,6 +30,10 @@ public class ServiceOffering {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "booking_mode", nullable = false, length = 30)
+    private BookingMode bookingMode = BookingMode.EXCLUSIVE_RESOURCE;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "business_id", nullable = false)
     private Business business;
@@ -82,6 +86,10 @@ public class ServiceOffering {
         return active;
     }
 
+    public BookingMode getBookingMode() {
+        return bookingMode;
+    }
+
     public Business getBusiness() {
         return business;
     }
@@ -116,6 +124,10 @@ public class ServiceOffering {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public void setBookingMode(BookingMode bookingMode) {
+        this.bookingMode = bookingMode;
     }
 
     public void setBusiness(Business business) {

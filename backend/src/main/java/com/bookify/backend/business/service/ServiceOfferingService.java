@@ -4,6 +4,7 @@ import com.bookify.backend.business.dto.CreateServiceRequest;
 import com.bookify.backend.business.dto.ServiceResponse;
 import com.bookify.backend.business.dto.UpdateServiceRequest;
 import com.bookify.backend.business.model.Business;
+import com.bookify.backend.business.model.BookingMode;
 import com.bookify.backend.business.model.OfferingLocation;
 import com.bookify.backend.business.model.ServiceOffering;
 import com.bookify.backend.business.repository.BusinessRepository;
@@ -55,6 +56,7 @@ public class ServiceOfferingService {
         service.setCurrency(request.getCurrency());
         service.setBusiness(business);
         service.setActive(true);
+        service.setBookingMode(defaultMode(request.getBookingMode()));
 
         serviceOfferingRepository.save(service);
         saveLocationLinks(business, service, locations);
@@ -89,6 +91,7 @@ public class ServiceOfferingService {
         service.setPrice(request.getPrice());
         service.setCurrency(request.getCurrency());
         service.setActive(request.getActive());
+        service.setBookingMode(defaultMode(request.getBookingMode()));
 
         offeringLocationRepository.deleteByServiceId(serviceId);
         offeringLocationRepository.flush();
@@ -142,6 +145,7 @@ public class ServiceOfferingService {
                 service.getPrice(),
                 service.getCurrency(),
                 service.isActive(),
+                service.getBookingMode(),
                 service.getBusiness().getId(),
                 locationIds,
                 service.getCreatedAt(),
@@ -154,5 +158,9 @@ public class ServiceOfferingService {
             return null;
         }
         return value.trim();
+    }
+
+    private BookingMode defaultMode(BookingMode mode) {
+        return mode == null ? BookingMode.EXCLUSIVE_RESOURCE : mode;
     }
 }

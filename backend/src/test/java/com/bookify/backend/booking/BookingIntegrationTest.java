@@ -402,6 +402,8 @@ class BookingIntegrationTest {
                 service.getId(),
                 resource.getId(),
                 startsAt,
+                null,
+                1,
                 "Primera visita"
         );
     }

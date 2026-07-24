@@ -12,11 +12,15 @@ import com.bookify.backend.booking.model.BookingStatusHistory;
 import com.bookify.backend.booking.repository.BookingRepository;
 import com.bookify.backend.booking.repository.BookingStatusHistoryRepository;
 import com.bookify.backend.business.model.ServiceOffering;
+import com.bookify.backend.business.model.BookingMode;
 import com.bookify.backend.business.repository.OfferingLocationRepository;
 import com.bookify.backend.business.repository.ServiceOfferingRepository;
 import com.bookify.backend.common.exception.BadRequestException;
 import com.bookify.backend.common.exception.BookingConflictException;
 import com.bookify.backend.common.exception.ResourceNotFoundException;
+import com.bookify.backend.capacity.model.CapacitySession;
+import com.bookify.backend.capacity.model.CapacitySessionStatus;
+import com.bookify.backend.capacity.repository.CapacitySessionRepository;
 import com.bookify.backend.location.model.BusinessLocation;
 import com.bookify.backend.location.repository.BusinessLocationRepository;
 import com.bookify.backend.resource.model.BookableResource;
@@ -51,6 +55,7 @@ public class BookingService {
     private final OfferingLocationRepository offeringLocationRepository;
     private final OfferingResourceRepository offeringResourceRepository;
     private final AvailabilitySlotService availabilityService;
+    private final CapacitySessionRepository capacitySessionRepository;
 
     public BookingService(
             BookingRepository bookingRepository,
@@ -61,7 +66,8 @@ public class BookingService {
             BookableResourceRepository resourceRepository,
             OfferingLocationRepository offeringLocationRepository,
             OfferingResourceRepository offeringResourceRepository,
-            AvailabilitySlotService availabilityService
+            AvailabilitySlotService availabilityService,
+            CapacitySessionRepository capacitySessionRepository
     ) {
         this.bookingRepository = bookingRepository;
         this.historyRepository = historyRepository;
@@ -72,6 +78,7 @@ public class BookingService {
         this.offeringLocationRepository = offeringLocationRepository;
         this.offeringResourceRepository = offeringResourceRepository;
         this.availabilityService = availabilityService;
+        this.capacitySessionRepository = capacitySessionRepository;
     }
 
     @Transactional
@@ -106,27 +113,13 @@ public class BookingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Bookable resource not found"));
         validateRelationships(request, location, service, resource);
 
-        Instant endsAt = request.startsAt().plus(
-                service.getDurationMinutes(), ChronoUnit.MINUTES
-        );
-        if (bookingRepository.existsActiveOverlap(
-                resource.getId(), ACTIVE_STATUSES, request.startsAt(), endsAt
-        )) {
-            throw new BookingConflictException("Resource is already booked");
-        }
-        requireGeneratedSlot(request, location, endsAt);
-
-        Booking booking = new Booking(
-                service.getBusiness(),
-                location,
-                service,
-                resource,
-                customer,
-                request.startsAt(),
-                endsAt,
-                trimToNull(request.notes()),
-                normalizedKey
-        );
+        Booking booking = service.getBookingMode() == BookingMode.CAPACITY_SESSION
+                ? createCapacityBooking(
+                        request, service, location, resource, customer, normalizedKey
+                )
+                : createExclusiveBooking(
+                        request, service, location, resource, customer, normalizedKey
+                );
         try {
             Booking saved = bookingRepository.saveAndFlush(booking);
             historyRepository.save(new BookingStatusHistory(
@@ -174,6 +167,7 @@ public class BookingService {
         }
         Booking saved = bookingRepository.saveAndFlush(booking);
         if (previous != BookingStatus.CANCELLED) {
+            releaseCapacity(saved);
             historyRepository.save(new BookingStatusHistory(
                     saved,
                     customer,
@@ -211,6 +205,9 @@ public class BookingService {
             throw new BadRequestException(exception.getMessage());
         }
         Booking saved = bookingRepository.saveAndFlush(booking);
+        if (target == BookingStatus.CANCELLED || target == BookingStatus.REJECTED) {
+            releaseCapacity(saved);
+        }
         historyRepository.save(new BookingStatusHistory(
                 saved, actor, previous, target, normalizedReason
         ));
@@ -256,6 +253,84 @@ public class BookingService {
                 )) {
             throw new ResourceNotFoundException("Resource is not assigned to this service");
         }
+    }
+
+    private Booking createExclusiveBooking(
+            CreateBookingRequest request,
+            ServiceOffering service,
+            BusinessLocation location,
+            BookableResource resource,
+            User customer,
+            String idempotencyKey
+    ) {
+        if (request.capacitySessionId() != null
+                || (request.quantity() != null && request.quantity() != 1)) {
+            throw new BadRequestException(
+                    "Exclusive-resource bookings require quantity 1 and no capacity session"
+            );
+        }
+        Instant endsAt = request.startsAt().plus(
+                service.getDurationMinutes(), ChronoUnit.MINUTES
+        );
+        if (bookingRepository.existsActiveOverlap(
+                resource.getId(), ACTIVE_STATUSES, request.startsAt(), endsAt
+        )) {
+            throw new BookingConflictException("Resource is already booked");
+        }
+        requireGeneratedSlot(request, location, endsAt);
+        return new Booking(
+                service.getBusiness(), location, service, resource, customer,
+                request.startsAt(), endsAt, trimToNull(request.notes()), idempotencyKey
+        );
+    }
+
+    private Booking createCapacityBooking(
+            CreateBookingRequest request,
+            ServiceOffering service,
+            BusinessLocation location,
+            BookableResource resource,
+            User customer,
+            String idempotencyKey
+    ) {
+        if (request.capacitySessionId() == null) {
+            throw new BadRequestException("Capacity session id is required");
+        }
+        int quantity = request.quantity() == null ? 1 : request.quantity();
+        CapacitySession session = capacitySessionRepository
+                .findForUpdateByIdAndBusinessId(request.capacitySessionId(), request.businessId())
+                .orElseThrow(() -> new ResourceNotFoundException("Capacity session not found"));
+        boolean matches = session.getLocation().getId().equals(location.getId())
+                && session.getService().getId().equals(service.getId())
+                && session.getResource().getId().equals(resource.getId())
+                && session.getStartsAt().equals(request.startsAt())
+                && session.getStatus() == CapacitySessionStatus.OPEN;
+        if (!matches) {
+            throw new BookingConflictException("Capacity session does not match request");
+        }
+        try {
+            session.reserve(quantity);
+        } catch (IllegalStateException exception) {
+            throw new BookingConflictException(exception.getMessage());
+        }
+        capacitySessionRepository.saveAndFlush(session);
+        return new Booking(
+                service.getBusiness(), location, service, resource, session, customer,
+                quantity, trimToNull(request.notes()), idempotencyKey
+        );
+    }
+
+    private void releaseCapacity(Booking booking) {
+        if (booking.getCapacitySession() == null) {
+            return;
+        }
+        CapacitySession session = capacitySessionRepository
+                .findForUpdateByIdAndBusinessId(
+                        booking.getCapacitySession().getId(),
+                        booking.getBusiness().getId()
+                )
+                .orElseThrow(() -> new ResourceNotFoundException("Capacity session not found"));
+        session.release(booking.getQuantity());
+        capacitySessionRepository.saveAndFlush(session);
     }
 
     private void requireGeneratedSlot(

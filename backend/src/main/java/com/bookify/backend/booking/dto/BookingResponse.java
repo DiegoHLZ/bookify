@@ -17,6 +17,7 @@ public record BookingResponse(
         Long resourceId,
         String resourceName,
         ResourceType resourceType,
+        Long capacitySessionId,
         Long customerId,
         String customerEmail,
         Instant startsAt,
@@ -42,6 +43,8 @@ public record BookingResponse(
                 booking.getResource().getId(),
                 booking.getResource().getName(),
                 booking.getResource().getType(),
+                booking.getCapacitySession() == null
+                        ? null : booking.getCapacitySession().getId(),
                 booking.getCustomer().getId(),
                 booking.getCustomer().getEmail(),
                 booking.getStartsAt(),

@@ -12,10 +12,13 @@ import com.bookify.backend.booking.model.Booking;
 import com.bookify.backend.booking.model.BookingStatus;
 import com.bookify.backend.booking.repository.BookingRepository;
 import com.bookify.backend.business.model.ServiceOffering;
+import com.bookify.backend.business.model.BookingMode;
 import com.bookify.backend.business.repository.OfferingLocationRepository;
 import com.bookify.backend.business.repository.ServiceOfferingRepository;
 import com.bookify.backend.common.exception.BadRequestException;
 import com.bookify.backend.common.exception.ResourceNotFoundException;
+import com.bookify.backend.capacity.model.CapacitySessionStatus;
+import com.bookify.backend.capacity.repository.CapacitySessionRepository;
 import com.bookify.backend.location.model.BusinessLocation;
 import com.bookify.backend.location.repository.BusinessLocationRepository;
 import com.bookify.backend.resource.model.BookableResource;
@@ -56,6 +59,7 @@ public class AvailabilitySlotService {
     private final ResourceScheduleRuleRepository ruleRepository;
     private final ResourceScheduleExceptionRepository exceptionRepository;
     private final BookingRepository bookingRepository;
+    private final CapacitySessionRepository capacitySessionRepository;
 
     public AvailabilitySlotService(
             ServiceOfferingRepository serviceRepository,
@@ -64,7 +68,8 @@ public class AvailabilitySlotService {
             OfferingResourceRepository offeringResourceRepository,
             ResourceScheduleRuleRepository ruleRepository,
             ResourceScheduleExceptionRepository exceptionRepository,
-            BookingRepository bookingRepository
+            BookingRepository bookingRepository,
+            CapacitySessionRepository capacitySessionRepository
     ) {
         this.serviceRepository = serviceRepository;
         this.locationRepository = locationRepository;
@@ -73,6 +78,7 @@ public class AvailabilitySlotService {
         this.ruleRepository = ruleRepository;
         this.exceptionRepository = exceptionRepository;
         this.bookingRepository = bookingRepository;
+        this.capacitySessionRepository = capacitySessionRepository;
     }
 
     @Transactional(readOnly = true)
@@ -94,6 +100,31 @@ public class AvailabilitySlotService {
         }
 
         ZoneId zone = requireZone(location.getTimezone());
+        if (service.getBookingMode() == BookingMode.CAPACITY_SESSION) {
+            InstantRange range = queryRange(from, to, zone);
+            List<AvailabilitySlotResponse> sessionSlots = capacitySessionRepository
+                    .findByBusinessIdAndLocationIdAndServiceIdAndStatusAndStartsAtGreaterThanEqualAndStartsAtLessThanOrderByStartsAtAsc(
+                            businessId, locationId, serviceId, CapacitySessionStatus.OPEN,
+                            range.start(), range.end()
+                    )
+                    .stream()
+                    .filter(session -> session.getRemainingCapacity() > 0)
+                    .map(session -> new AvailabilitySlotResponse(
+                            session.getResource().getId(),
+                            session.getResource().getName(),
+                            session.getResource().getType(),
+                            session.getId(),
+                            session.getRemainingCapacity(),
+                            LocalDateTime.ofInstant(session.getStartsAt(), zone),
+                            LocalDateTime.ofInstant(session.getEndsAt(), zone),
+                            session.getStartsAt(),
+                            session.getEndsAt()
+                    ))
+                    .toList();
+            return response(
+                    businessId, locationId, service, intervalMinutes, zone, from, to, sessionSlots
+            );
+        }
         List<BookableResource> resources = offeringResourceRepository.findActiveResources(
                 businessId, serviceId, locationId
         );
@@ -277,6 +308,8 @@ public class AvailabilitySlotService {
                         resource.getId(),
                         resource.getName(),
                         resource.getType(),
+                        null,
+                        null,
                         localStart,
                         zonedEnd.toLocalDateTime(),
                         zonedStart.toInstant(),

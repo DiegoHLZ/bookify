@@ -1,5 +1,6 @@
 package com.bookify.backend.business.dto;
 
+import com.bookify.backend.business.model.BookingMode;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,6 +14,7 @@ public class ServiceResponse {
     private BigDecimal price;
     private String currency;
     private boolean active;
+    private BookingMode bookingMode;
     private Long businessId;
     private List<Long> locationIds;
     private LocalDateTime createdAt;
@@ -22,7 +24,8 @@ public class ServiceResponse {
     }
 
     public ServiceResponse(Long id, String name, String description, Integer durationMinutes,
-                           BigDecimal price, String currency, boolean active, Long businessId,
+                           BigDecimal price, String currency, boolean active,
+                           BookingMode bookingMode, Long businessId,
                            List<Long> locationIds,
                            LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
@@ -32,6 +35,7 @@ public class ServiceResponse {
         this.price = price;
         this.currency = currency;
         this.active = active;
+        this.bookingMode = bookingMode;
         this.businessId = businessId;
         this.locationIds = locationIds;
         this.createdAt = createdAt;
@@ -64,6 +68,10 @@ public class ServiceResponse {
 
     public boolean isActive() {
         return active;
+    }
+
+    public BookingMode getBookingMode() {
+        return bookingMode;
     }
 
     public Long getBusinessId() {

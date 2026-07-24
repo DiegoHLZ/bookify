@@ -9,6 +9,8 @@ public record AvailabilitySlotResponse(
         Long resourceId,
         String resourceName,
         ResourceType resourceType,
+        Long capacitySessionId,
+        Integer remainingCapacity,
         LocalDateTime localStart,
         LocalDateTime localEnd,
         Instant startAt,
