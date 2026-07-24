@@ -54,3 +54,14 @@ Material changes should become dated ADR files under `docs/adr/`.
 - **Status:** Accepted
 - **Decision:** Bookify ratings come from one review per completed booking. External ratings, if later licensed, remain separately attributed.
 - **Consequences:** Ranking stores rating count as well as average and includes anti-abuse monitoring.
+
+## ADR-010 — Exclusive-resource bookings use range exclusion first
+
+- **Status:** Accepted.
+- **Decision:** The first transactional slice books one exclusive resource per interval.
+  Creation serializes on customer and resource rows, revalidates generated availability, and
+  PostgreSQL enforces non-overlap with a partial GiST exclusion constraint over active
+  `tstzrange` values. A unique customer/idempotency-key constraint protects retries.
+- **Consequences:** Professionals, courts, rooms, desks and equipment can be booked safely.
+  Shared-capacity sessions remain a separate policy requiring concrete session capacity and
+  row locking; resource `capacity` is not silently treated as concurrent booking capacity.

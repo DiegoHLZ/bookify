@@ -130,3 +130,22 @@ date; `CUSTOM_HOURS` replaces recurring availability while recurring breaks that
 still apply. Service duration determines whether a candidate fits, and `intervalMinutes`
 controls candidate start cadence. IANA timezone rules skip nonexistent DST local starts and
 emit both concrete instants for ambiguous repeated local starts.
+
+## Exclusive-resource bookings
+
+- `POST /api/v1/bookings` creates a confirmed booking for the authenticated customer.
+  `Idempotency-Key` is required (1–100 characters).
+- `GET /api/v1/bookings` lists the authenticated customer's bookings.
+- `POST /api/v1/bookings/{bookingId}/cancel` idempotently cancels a customer-owned active
+  booking.
+- `GET /api/v1/businesses/{businessId}/bookings` lists operational bookings for active
+  business members.
+
+Creation accepts `businessId`, `locationId`, `serviceId`, `resourceId`, UTC `startsAt` and
+optional bounded `notes`. The server derives `endsAt` from the current service duration and
+revalidates the exact slot after locking the customer and resource. Replaying the same
+customer/key returns the original booking. Active overlapping intervals return `409 Conflict`.
+
+`PENDING` and `CONFIRMED` bookings remove every intersecting candidate from availability.
+Cancellation records `cancelledAt` and releases the interval. Responses include UTC instants
+plus local date-times and the location's IANA timezone.

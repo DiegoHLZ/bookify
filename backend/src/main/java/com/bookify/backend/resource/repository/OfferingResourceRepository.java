@@ -34,6 +34,13 @@ public interface OfferingResourceRepository extends JpaRepository<OfferingResour
             @Param("locationId") Long locationId
     );
 
+    boolean existsByBusinessIdAndServiceIdAndLocationIdAndResourceId(
+            Long businessId,
+            Long serviceId,
+            Long locationId,
+            Long resourceId
+    );
+
     @Modifying
     @Query("delete from OfferingResource link where link.service.id = :serviceId")
     void deleteByServiceId(@Param("serviceId") Long serviceId);

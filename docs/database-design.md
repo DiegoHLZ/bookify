@@ -108,6 +108,11 @@ One verified rating per completed booking. Contains score 1–5, optional text, 
 
 For exclusive-resource intervals that are not pre-generated, PostgreSQL exclusion constraints can protect overlapping `tstzrange` values. The first implementation should choose either slot locking or range exclusion per booking mode and capture it in a migration ADR.
 
+The first implemented mode uses direct exclusive-resource booking intervals rather than
+persisted slot rows. Application transactions lock the resource and PostgreSQL additionally
+rejects overlapping active `tstzrange` values. Shared-capacity sessions will use concrete
+capacity rows and atomic counters in a separate policy.
+
 ## Geospatial search
 
 - Coordinates use validated longitude/latitude and stored geocoding provenance.

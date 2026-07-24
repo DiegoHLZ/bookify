@@ -36,6 +36,7 @@ The Angular/Spring Boot repository is an early generic service-booking implement
 - Service-resource assignments are atomic and constrained to locations where the service is offered.
 - Resources support recurring local-time availability, contained breaks and deterministic dated exceptions.
 - Service availability produces concrete, duration-aware resource slots in UTC with DST-safe IANA timezone conversion.
+- Exclusive-resource bookings are idempotent, transactionally revalidated and protected from overlaps in PostgreSQL.
 
 The previously committed JWT value must still be considered compromised and rotated anywhere it was used.
 
@@ -48,8 +49,8 @@ The previously committed JWT value must still be considered compromised and rota
 ## Missing capabilities
 
 - PostGIS nearby search and coordinate verification.
-- Booking persistence and collision-aware slot exclusion.
-- Capacity/idempotency/concurrency guarantees.
+- Staff booking state transitions and shared-capacity sessions.
+- Production PostgreSQL concurrency/load baselines.
 - Verified reviews and rating projections.
 - Search projection, relevance evaluation and NVIDIA adapters.
 - PostgreSQL integration, concurrency and architecture tests.

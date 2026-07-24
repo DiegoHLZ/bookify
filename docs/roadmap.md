@@ -49,6 +49,10 @@ Status: **complete**. Offerings use fixed-precision prices and are assigned atom
 
 Exit: discovery → booking works end to end and cannot overbook under concurrent load.
 
+Status: **in progress**. Exclusive-resource bookings now support idempotent creation,
+customer cancellation, customer/business views, availability exclusion and two-layer
+concurrency protection. Staff state transitions and shared-capacity sessions remain.
+
 ## Phase 5 — Reviews and baseline ranking
 
 - One verified review per completed booking.

@@ -8,6 +8,9 @@ import com.bookify.backend.availability.model.ScheduleExceptionType;
 import com.bookify.backend.availability.model.ScheduleRuleType;
 import com.bookify.backend.availability.repository.ResourceScheduleExceptionRepository;
 import com.bookify.backend.availability.repository.ResourceScheduleRuleRepository;
+import com.bookify.backend.booking.model.Booking;
+import com.bookify.backend.booking.model.BookingStatus;
+import com.bookify.backend.booking.repository.BookingRepository;
 import com.bookify.backend.business.model.ServiceOffering;
 import com.bookify.backend.business.repository.OfferingLocationRepository;
 import com.bookify.backend.business.repository.ServiceOfferingRepository;
@@ -30,6 +33,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -42,6 +46,8 @@ public class AvailabilitySlotService {
     private static final int MIN_INTERVAL_MINUTES = 5;
     private static final int MAX_INTERVAL_MINUTES = 1440;
     private static final int MAX_SLOTS = 10_000;
+    private static final EnumSet<BookingStatus> ACTIVE_BOOKING_STATUSES =
+            EnumSet.of(BookingStatus.PENDING, BookingStatus.CONFIRMED);
 
     private final ServiceOfferingRepository serviceRepository;
     private final BusinessLocationRepository locationRepository;
@@ -49,6 +55,7 @@ public class AvailabilitySlotService {
     private final OfferingResourceRepository offeringResourceRepository;
     private final ResourceScheduleRuleRepository ruleRepository;
     private final ResourceScheduleExceptionRepository exceptionRepository;
+    private final BookingRepository bookingRepository;
 
     public AvailabilitySlotService(
             ServiceOfferingRepository serviceRepository,
@@ -56,7 +63,8 @@ public class AvailabilitySlotService {
             OfferingLocationRepository offeringLocationRepository,
             OfferingResourceRepository offeringResourceRepository,
             ResourceScheduleRuleRepository ruleRepository,
-            ResourceScheduleExceptionRepository exceptionRepository
+            ResourceScheduleExceptionRepository exceptionRepository,
+            BookingRepository bookingRepository
     ) {
         this.serviceRepository = serviceRepository;
         this.locationRepository = locationRepository;
@@ -64,6 +72,7 @@ public class AvailabilitySlotService {
         this.offeringResourceRepository = offeringResourceRepository;
         this.ruleRepository = ruleRepository;
         this.exceptionRepository = exceptionRepository;
+        this.bookingRepository = bookingRepository;
     }
 
     @Transactional(readOnly = true)
@@ -114,6 +123,16 @@ public class AvailabilitySlotService {
                                         Function.identity()
                                 )
                         ));
+        InstantRange queryRange = queryRange(from, to, zone);
+        Map<Long, List<Booking>> bookingsByResource = bookingRepository
+                .findActiveOverlapping(
+                        resourceIds,
+                        ACTIVE_BOOKING_STATUSES,
+                        queryRange.start(),
+                        queryRange.end()
+                )
+                .stream()
+                .collect(Collectors.groupingBy(booking -> booking.getResource().getId()));
 
         List<AvailabilitySlotResponse> slots = new ArrayList<>();
         for (BookableResource resource : resources) {
@@ -121,6 +140,7 @@ public class AvailabilitySlotService {
                     resource,
                     rulesByResource.getOrDefault(resource.getId(), List.of()),
                     exceptionsByResource.getOrDefault(resource.getId(), Map.of()),
+                    bookingsByResource.getOrDefault(resource.getId(), List.of()),
                     from,
                     to,
                     service.getDurationMinutes(),
@@ -141,6 +161,7 @@ public class AvailabilitySlotService {
             BookableResource resource,
             List<ResourceScheduleRule> rules,
             Map<LocalDate, ResourceScheduleException> exceptions,
+            List<Booking> bookings,
             LocalDate from,
             LocalDate to,
             int durationMinutes,
@@ -163,7 +184,14 @@ public class AvailabilitySlotService {
             List<TimeRange> available = availableRanges(dayRules, exception);
             for (TimeRange free : subtractBreaks(available, breaks)) {
                 appendSlots(
-                        resource, date, free, durationMinutes, intervalMinutes, zone, target
+                        resource,
+                        date,
+                        free,
+                        durationMinutes,
+                        intervalMinutes,
+                        zone,
+                        target,
+                        bookings
                 );
             }
         }
@@ -228,7 +256,8 @@ public class AvailabilitySlotService {
             int durationMinutes,
             int intervalMinutes,
             ZoneId zone,
-            List<AvailabilitySlotResponse> target
+            List<AvailabilitySlotResponse> target,
+            List<Booking> bookings
     ) {
         LocalDateTime localBoundary = LocalDateTime.of(date, free.end());
         for (LocalDateTime localStart = LocalDateTime.of(date, free.start());
@@ -239,6 +268,9 @@ public class AvailabilitySlotService {
                 ZonedDateTime zonedStart = ZonedDateTime.ofLocal(localStart, zone, offset);
                 ZonedDateTime zonedEnd = zonedStart.plus(Duration.ofMinutes(durationMinutes));
                 if (zonedEnd.toLocalDateTime().isAfter(localBoundary)) {
+                    continue;
+                }
+                if (overlapsBooking(zonedStart, zonedEnd, bookings)) {
                     continue;
                 }
                 target.add(new AvailabilitySlotResponse(
@@ -279,6 +311,24 @@ public class AvailabilitySlotService {
                 from,
                 to,
                 List.copyOf(slots)
+        );
+    }
+
+    private boolean overlapsBooking(
+            ZonedDateTime start,
+            ZonedDateTime end,
+            List<Booking> bookings
+    ) {
+        return bookings.stream().anyMatch(booking ->
+                booking.getStartsAt().isBefore(end.toInstant())
+                        && booking.getEndsAt().isAfter(start.toInstant())
+        );
+    }
+
+    private InstantRange queryRange(LocalDate from, LocalDate to, ZoneId zone) {
+        return new InstantRange(
+                from.atStartOfDay(zone).toInstant(),
+                to.plusDays(1).atStartOfDay(zone).toInstant()
         );
     }
 
@@ -335,5 +385,8 @@ public class AvailabilitySlotService {
     }
 
     private record TimeRange(LocalTime start, LocalTime end) {
+    }
+
+    private record InstantRange(java.time.Instant start, java.time.Instant end) {
     }
 }
