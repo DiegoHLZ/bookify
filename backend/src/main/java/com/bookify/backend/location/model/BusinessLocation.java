@@ -16,6 +16,7 @@ import jakarta.persistence.UniqueConstraint;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(
@@ -59,6 +60,15 @@ public class BusinessLocation {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(name = "coordinates_verified", nullable = false)
+    private boolean coordinatesVerified = false;
+
+    @Column(name = "coordinates_verified_at")
+    private Instant coordinatesVerifiedAt;
+
+    @Column(name = "coordinate_source", length = 100)
+    private String coordinateSource;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -86,6 +96,9 @@ public class BusinessLocation {
         this.timezone = timezone;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.coordinatesVerified = false;
+        this.coordinatesVerifiedAt = null;
+        this.coordinateSource = null;
     }
 
     @PrePersist
@@ -156,11 +169,24 @@ public class BusinessLocation {
         this.timezone = timezone;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.coordinatesVerified = false;
+        this.coordinatesVerifiedAt = null;
+        this.coordinateSource = null;
     }
 
     public void setActive(boolean active) {
         this.active = active;
     }
+
+    public void verifyCoordinates(String source, Instant verifiedAt) {
+        this.coordinatesVerified = true;
+        this.coordinateSource = source;
+        this.coordinatesVerifiedAt = verifiedAt;
+    }
+
+    public boolean isCoordinatesVerified() { return coordinatesVerified; }
+    public Instant getCoordinatesVerifiedAt() { return coordinatesVerifiedAt; }
+    public String getCoordinateSource() { return coordinateSource; }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;

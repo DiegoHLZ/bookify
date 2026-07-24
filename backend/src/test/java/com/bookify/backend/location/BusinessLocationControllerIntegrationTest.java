@@ -18,6 +18,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import com.bookify.backend.config.AuthenticatedUser;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import java.util.List;
 
 import java.math.BigDecimal;
 
@@ -28,6 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -176,6 +181,54 @@ class BusinessLocationControllerIntegrationTest {
                         .content(locationJson("Sede válida", "Lima/Invalid")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Location timezone must be a valid IANA timezone"));
+    }
+
+    @Test
+    @WithMockUser(username = OWNER_EMAIL)
+    void businessOwnerCannotSelfVerifyCoordinates() throws Exception {
+        mockMvc.perform(post(
+                        "/api/v1/businesses/{businessId}/locations/{locationId}/coordinates/verify",
+                        firstBusiness.getId(),
+                        firstLocation.getId()
+                )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"source\":\"manual\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void platformAdminVerifiesCoordinatesAndLocationEditInvalidatesThem() throws Exception {
+        var principal = new AuthenticatedUser("platform.admin@bookify.test", "ADMIN");
+        var authenticationToken = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+        );
+        mockMvc.perform(post(
+                        "/api/v1/businesses/{businessId}/locations/{locationId}/coordinates/verify",
+                        firstBusiness.getId(),
+                        firstLocation.getId()
+                )
+                        .with(authentication(authenticationToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"source\":\"verified-geocoder\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.coordinatesVerified").value(true))
+                .andExpect(jsonPath("$.coordinateSource").value("verified-geocoder"))
+                .andExpect(jsonPath("$.coordinatesVerifiedAt").isNotEmpty());
+
+        mockMvc.perform(put(
+                        "/api/v1/businesses/{businessId}/locations/{locationId}",
+                        firstBusiness.getId(),
+                        firstLocation.getId()
+                )
+                        .with(org.springframework.security.test.web.servlet.request
+                                .SecurityMockMvcRequestPostProcessors.user(OWNER_EMAIL))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(locationJson("Sede actualizada", "America/Lima")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.coordinatesVerified").value(false))
+                .andExpect(jsonPath("$.coordinateSource").doesNotExist());
     }
 
     private Business business(String slug) {

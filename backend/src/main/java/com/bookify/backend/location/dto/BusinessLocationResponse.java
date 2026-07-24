@@ -4,6 +4,7 @@ import com.bookify.backend.location.model.BusinessLocation;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record BusinessLocationResponse(
         Long id,
@@ -16,6 +17,9 @@ public record BusinessLocationResponse(
         BigDecimal latitude,
         BigDecimal longitude,
         boolean active,
+        boolean coordinatesVerified,
+        Instant coordinatesVerifiedAt,
+        String coordinateSource,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -31,6 +35,9 @@ public record BusinessLocationResponse(
                 location.getLatitude(),
                 location.getLongitude(),
                 location.isActive(),
+                location.isCoordinatesVerified(),
+                location.getCoordinatesVerifiedAt(),
+                location.getCoordinateSource(),
                 location.getCreatedAt(),
                 location.getUpdatedAt()
         );

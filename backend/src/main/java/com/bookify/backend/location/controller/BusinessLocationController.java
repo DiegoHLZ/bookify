@@ -4,6 +4,7 @@ import com.bookify.backend.common.SecurityUtils;
 import com.bookify.backend.location.dto.BusinessLocationResponse;
 import com.bookify.backend.location.dto.LocationStatusRequest;
 import com.bookify.backend.location.dto.UpsertLocationRequest;
+import com.bookify.backend.location.dto.VerifyCoordinatesRequest;
 import com.bookify.backend.location.service.BusinessLocationService;
 import com.bookify.backend.tenancy.service.BusinessAccessService;
 import jakarta.validation.Valid;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import org.springframework.security.access.AccessDeniedException;
 
 @RestController
 @RequestMapping("/api/v1/businesses/{businessId}/locations")
@@ -78,6 +80,20 @@ public class BusinessLocationController {
     ) {
         requireManagement(businessId);
         return locationService.changeStatus(businessId, locationId, request.active());
+    }
+
+    @PostMapping("/{locationId}/coordinates/verify")
+    public BusinessLocationResponse verifyCoordinates(
+            @PathVariable Long businessId,
+            @PathVariable Long locationId,
+            @Valid @RequestBody VerifyCoordinatesRequest request
+    ) {
+        if (!"ADMIN".equals(SecurityUtils.getCurrentRole())) {
+            throw new AccessDeniedException("Platform administrator access required");
+        }
+        return locationService.verifyCoordinates(
+                businessId, locationId, request.source()
+        );
     }
 
     private void requireMembership(Long businessId) {

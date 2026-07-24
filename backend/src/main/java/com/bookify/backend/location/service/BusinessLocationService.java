@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DateTimeException;
 import java.time.ZoneId;
+import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 
@@ -100,6 +101,18 @@ public class BusinessLocationService {
         }
 
         location.setActive(active);
+        return BusinessLocationResponse.from(locationRepository.saveAndFlush(location));
+    }
+
+    @Transactional
+    public BusinessLocationResponse verifyCoordinates(
+            Long businessId,
+            Long locationId,
+            String source
+    ) {
+        requireActiveBusiness(businessId);
+        BusinessLocation location = requireLocation(businessId, locationId);
+        location.verifyCoordinates(source.trim(), Instant.now());
         return BusinessLocationResponse.from(locationRepository.saveAndFlush(location));
     }
 
