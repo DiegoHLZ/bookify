@@ -1,6 +1,8 @@
 package com.bookify.backend.business.model;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 @Entity
@@ -30,6 +32,15 @@ public class Business {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    @Column(name = "rating_average", nullable = false, precision = 3, scale = 2)
+    private BigDecimal ratingAverage = BigDecimal.ZERO.setScale(2);
+
+    @Column(name = "rating_count", nullable = false)
+    private Integer ratingCount = 0;
+
+    @Column(name = "rating_sum", nullable = false)
+    private Integer ratingSum = 0;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -118,6 +129,17 @@ public class Business {
     public void setActive(boolean active) {
         this.active = active;
     }
+
+    public void addVerifiedRating(int score) {
+        ratingSum += score;
+        ratingCount++;
+        ratingAverage = BigDecimal.valueOf(ratingSum).divide(
+                BigDecimal.valueOf(ratingCount), 2, RoundingMode.HALF_UP
+        );
+    }
+
+    public BigDecimal getRatingAverage() { return ratingAverage; }
+    public Integer getRatingCount() { return ratingCount; }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
