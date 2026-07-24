@@ -140,6 +140,10 @@ emit both concrete instants for ambiguous repeated local starts.
   booking.
 - `GET /api/v1/businesses/{businessId}/bookings` lists operational bookings for active
   business members.
+- `PATCH /api/v1/businesses/{businessId}/bookings/{bookingId}/status` applies an allowed
+  operational transition for an active business member.
+- `GET /api/v1/businesses/{businessId}/bookings/{bookingId}/history` returns the immutable
+  status audit trail.
 
 Creation accepts `businessId`, `locationId`, `serviceId`, `resourceId`, UTC `startsAt` and
 optional bounded `notes`. The server derives `endsAt` from the current service duration and
@@ -149,3 +153,9 @@ customer/key returns the original booking. Active overlapping intervals return `
 `PENDING` and `CONFIRMED` bookings remove every intersecting candidate from availability.
 Cancellation records `cancelledAt` and releases the interval. Responses include UTC instants
 plus local date-times and the location's IANA timezone.
+
+Allowed transitions are `PENDING → CONFIRMED|REJECTED|CANCELLED` and
+`CONFIRMED → COMPLETED|NO_SHOW|CANCELLED`. Terminal bookings cannot be reopened.
+Business cancellation or rejection requires a reason. Creation, customer cancellation and
+every business transition record actor, previous/new status, reason and timestamp in the same
+database transaction.

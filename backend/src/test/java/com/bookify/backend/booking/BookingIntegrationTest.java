@@ -6,6 +6,7 @@ import com.bookify.backend.availability.repository.ResourceScheduleExceptionRepo
 import com.bookify.backend.availability.repository.ResourceScheduleRuleRepository;
 import com.bookify.backend.booking.dto.CreateBookingRequest;
 import com.bookify.backend.booking.repository.BookingRepository;
+import com.bookify.backend.booking.repository.BookingStatusHistoryRepository;
 import com.bookify.backend.booking.service.BookingService;
 import com.bookify.backend.business.model.Business;
 import com.bookify.backend.business.model.OfferingLocation;
@@ -69,6 +70,7 @@ class BookingIntegrationTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private BookingService bookingService;
     @Autowired private BookingRepository bookingRepository;
+    @Autowired private BookingStatusHistoryRepository historyRepository;
     @Autowired private ResourceScheduleExceptionRepository exceptionRepository;
     @Autowired private ResourceScheduleRuleRepository ruleRepository;
     @Autowired private OfferingResourceRepository offeringResourceRepository;
@@ -87,6 +89,7 @@ class BookingIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        historyRepository.deleteAll();
         bookingRepository.deleteAll();
         exceptionRepository.deleteAll();
         ruleRepository.deleteAll();
@@ -192,6 +195,8 @@ class BookingIntegrationTest {
                         .queryParam("intervalMinutes", "60"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.slots", hasSize(4)));
+
+        assertEquals(2, historyRepository.count());
     }
 
     @Test
@@ -234,6 +239,115 @@ class BookingIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].customerEmail").value(CUSTOMER_EMAIL));
+    }
+
+    @Test
+    @WithMockUser(username = OWNER_EMAIL)
+    void businessMemberCompletesBookingAndReadsAuditHistory() throws Exception {
+        Long bookingId = bookingService.create(
+                CUSTOMER_EMAIL, "complete-booking", request(START)
+        ).id();
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .patch(
+                                "/api/v1/businesses/{businessId}/bookings/{bookingId}/status",
+                                business.getId(),
+                                bookingId
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"COMPLETED","reason":"Servicio realizado"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
+
+        mockMvc.perform(get(
+                        "/api/v1/businesses/{businessId}/bookings/{bookingId}/history",
+                        business.getId(),
+                        bookingId
+                ))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].fromStatus").doesNotExist())
+                .andExpect(jsonPath("$[0].toStatus").value("CONFIRMED"))
+                .andExpect(jsonPath("$[1].fromStatus").value("CONFIRMED"))
+                .andExpect(jsonPath("$[1].toStatus").value("COMPLETED"))
+                .andExpect(jsonPath("$[1].actorEmail").value(OWNER_EMAIL));
+    }
+
+    @Test
+    @WithMockUser(username = OWNER_EMAIL)
+    void rejectsInvalidTerminalTransitionsAndMissingReasons() throws Exception {
+        Long bookingId = bookingService.create(
+                CUSTOMER_EMAIL, "invalid-transition", request(START)
+        ).id();
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .patch(
+                                "/api/v1/businesses/{businessId}/bookings/{bookingId}/status",
+                                business.getId(),
+                                bookingId
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"CANCELLED"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(
+                        "Reason is required when cancelling or rejecting a booking"
+                ));
+
+        bookingService.changeStatus(
+                business.getId(),
+                bookingId,
+                com.bookify.backend.booking.model.BookingStatus.COMPLETED,
+                "Completada",
+                OWNER_EMAIL
+        );
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .patch(
+                                "/api/v1/businesses/{businessId}/bookings/{bookingId}/status",
+                                business.getId(),
+                                bookingId
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"NO_SHOW","reason":"Intento inválido"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(
+                        "Booking cannot transition from COMPLETED to NO_SHOW"
+                ));
+
+        assertEquals(2, historyRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = CUSTOMER_EMAIL)
+    void nonMemberCannotOperateOrReadBusinessHistory() throws Exception {
+        Long bookingId = bookingService.create(
+                CUSTOMER_EMAIL, "forbidden-operation", request(START)
+        ).id();
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .patch(
+                                "/api/v1/businesses/{businessId}/bookings/{bookingId}/status",
+                                business.getId(),
+                                bookingId
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"COMPLETED"}
+                                """))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get(
+                        "/api/v1/businesses/{businessId}/bookings/{bookingId}/history",
+                        business.getId(),
+                        bookingId
+                ))
+                .andExpect(status().isForbidden());
     }
 
     @Test

@@ -109,6 +109,29 @@ public class Booking {
         this.cancelledAt = cancelledAt;
     }
 
+    public BookingStatus transitionTo(BookingStatus target, Instant changedAt) {
+        BookingStatus previous = status;
+        boolean allowed = switch (status) {
+            case PENDING -> target == BookingStatus.CONFIRMED
+                    || target == BookingStatus.REJECTED
+                    || target == BookingStatus.CANCELLED;
+            case CONFIRMED -> target == BookingStatus.COMPLETED
+                    || target == BookingStatus.NO_SHOW
+                    || target == BookingStatus.CANCELLED;
+            case CANCELLED, REJECTED, COMPLETED, NO_SHOW -> false;
+        };
+        if (!allowed) {
+            throw new IllegalStateException(
+                    "Booking cannot transition from " + status + " to " + target
+            );
+        }
+        status = target;
+        if (target == BookingStatus.CANCELLED) {
+            cancelledAt = changedAt;
+        }
+        return previous;
+    }
+
     @PrePersist
     void onCreate() {
         Instant now = Instant.now();

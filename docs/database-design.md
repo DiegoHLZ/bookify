@@ -113,6 +113,10 @@ persisted slot rows. Application transactions lock the resource and PostgreSQL a
 rejects overlapping active `tstzrange` values. Shared-capacity sessions will use concrete
 capacity rows and atomic counters in a separate policy.
 
+`booking_status_history` is append-only application data for operational traceability. It
+stores the tenant, booking, actor, previous/new state, reason and UTC timestamp. The
+business/booking composite foreign key prevents cross-tenant audit records.
+
 ## Geospatial search
 
 - Coordinates use validated longitude/latitude and stored geocoding provenance.

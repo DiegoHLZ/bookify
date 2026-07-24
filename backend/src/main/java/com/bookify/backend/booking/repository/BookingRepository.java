@@ -2,7 +2,9 @@ package com.bookify.backend.booking.repository;
 
 import com.bookify.backend.booking.model.Booking;
 import com.bookify.backend.booking.model.BookingStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -15,7 +17,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     Optional<Booking> findByCustomerIdAndIdempotencyKey(Long customerId, String idempotencyKey);
 
-    Optional<Booking> findByIdAndCustomerId(Long id, Long customerId);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<Booking> findForUpdateByIdAndCustomerId(Long id, Long customerId);
+
+    Optional<Booking> findByIdAndBusinessId(Long id, Long businessId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<Booking> findForUpdateByIdAndBusinessId(Long id, Long businessId);
 
     List<Booking> findByCustomerIdOrderByStartsAtDesc(Long customerId);
 

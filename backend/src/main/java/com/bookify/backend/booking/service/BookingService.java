@@ -4,10 +4,13 @@ import com.bookify.backend.availability.dto.AvailabilitySlotResponse;
 import com.bookify.backend.availability.dto.ServiceAvailabilityResponse;
 import com.bookify.backend.availability.service.AvailabilitySlotService;
 import com.bookify.backend.booking.dto.BookingResponse;
+import com.bookify.backend.booking.dto.BookingStatusHistoryResponse;
 import com.bookify.backend.booking.dto.CreateBookingRequest;
 import com.bookify.backend.booking.model.Booking;
 import com.bookify.backend.booking.model.BookingStatus;
+import com.bookify.backend.booking.model.BookingStatusHistory;
 import com.bookify.backend.booking.repository.BookingRepository;
+import com.bookify.backend.booking.repository.BookingStatusHistoryRepository;
 import com.bookify.backend.business.model.ServiceOffering;
 import com.bookify.backend.business.repository.OfferingLocationRepository;
 import com.bookify.backend.business.repository.ServiceOfferingRepository;
@@ -40,6 +43,7 @@ public class BookingService {
             EnumSet.of(BookingStatus.PENDING, BookingStatus.CONFIRMED);
 
     private final BookingRepository bookingRepository;
+    private final BookingStatusHistoryRepository historyRepository;
     private final UserRepository userRepository;
     private final ServiceOfferingRepository serviceRepository;
     private final BusinessLocationRepository locationRepository;
@@ -50,6 +54,7 @@ public class BookingService {
 
     public BookingService(
             BookingRepository bookingRepository,
+            BookingStatusHistoryRepository historyRepository,
             UserRepository userRepository,
             ServiceOfferingRepository serviceRepository,
             BusinessLocationRepository locationRepository,
@@ -59,6 +64,7 @@ public class BookingService {
             AvailabilitySlotService availabilityService
     ) {
         this.bookingRepository = bookingRepository;
+        this.historyRepository = historyRepository;
         this.userRepository = userRepository;
         this.serviceRepository = serviceRepository;
         this.locationRepository = locationRepository;
@@ -122,7 +128,15 @@ public class BookingService {
                 normalizedKey
         );
         try {
-            return BookingResponse.from(bookingRepository.saveAndFlush(booking));
+            Booking saved = bookingRepository.saveAndFlush(booking);
+            historyRepository.save(new BookingStatusHistory(
+                    saved,
+                    customer,
+                    null,
+                    BookingStatus.CONFIRMED,
+                    "Created by customer"
+            ));
+            return BookingResponse.from(saved);
         } catch (DataIntegrityViolationException exception) {
             throw new BookingConflictException("Resource is already booked");
         }
@@ -149,14 +163,74 @@ public class BookingService {
     public BookingResponse cancel(Long bookingId, String customerEmail) {
         User customer = userRepository.findForUpdateByEmailIgnoreCase(customerEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
-        Booking booking = bookingRepository.findByIdAndCustomerId(bookingId, customer.getId())
+        Booking booking = bookingRepository
+                .findForUpdateByIdAndCustomerId(bookingId, customer.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+        BookingStatus previous = booking.getStatus();
         try {
             booking.cancel(Instant.now());
         } catch (IllegalStateException exception) {
             throw new BadRequestException(exception.getMessage());
         }
-        return BookingResponse.from(bookingRepository.saveAndFlush(booking));
+        Booking saved = bookingRepository.saveAndFlush(booking);
+        if (previous != BookingStatus.CANCELLED) {
+            historyRepository.save(new BookingStatusHistory(
+                    saved,
+                    customer,
+                    previous,
+                    BookingStatus.CANCELLED,
+                    "Cancelled by customer"
+            ));
+        }
+        return BookingResponse.from(saved);
+    }
+
+    @Transactional
+    public BookingResponse changeStatus(
+            Long businessId,
+            Long bookingId,
+            BookingStatus target,
+            String reason,
+            String actorEmail
+    ) {
+        String normalizedReason = trimToNull(reason);
+        if ((target == BookingStatus.CANCELLED || target == BookingStatus.REJECTED)
+                && normalizedReason == null) {
+            throw new BadRequestException(
+                    "Reason is required when cancelling or rejecting a booking"
+            );
+        }
+        User actor = requireUser(actorEmail);
+        Booking booking = bookingRepository
+                .findForUpdateByIdAndBusinessId(bookingId, businessId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+        BookingStatus previous;
+        try {
+            previous = booking.transitionTo(target, Instant.now());
+        } catch (IllegalStateException exception) {
+            throw new BadRequestException(exception.getMessage());
+        }
+        Booking saved = bookingRepository.saveAndFlush(booking);
+        historyRepository.save(new BookingStatusHistory(
+                saved, actor, previous, target, normalizedReason
+        ));
+        return BookingResponse.from(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingStatusHistoryResponse> findHistory(
+            Long businessId,
+            Long bookingId
+    ) {
+        bookingRepository.findByIdAndBusinessId(bookingId, businessId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+        return historyRepository
+                .findByBusinessIdAndBookingIdOrderByCreatedAtAscIdAsc(
+                        businessId, bookingId
+                )
+                .stream()
+                .map(BookingStatusHistoryResponse::from)
+                .toList();
     }
 
     private void validateRelationships(
