@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import com.bookify.backend.discovery.semantic.model.EmbeddingInputType;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -15,17 +17,17 @@ class MockSemanticAdaptersTest {
     @Test
     void recognizesConfiguredSpanishConceptsDeterministically() {
         double coworking = cosine(
-                embeddings.embed("quiero trabajar con mi laptop"),
-                embeddings.embed("coworking con escritorios y oficina compartida")
+                embed("quiero trabajar con mi laptop", EmbeddingInputType.QUERY),
+                embed("coworking con escritorios y oficina compartida", EmbeddingInputType.PASSAGE)
         );
         double haircut = cosine(
-                embeddings.embed("quiero trabajar con mi laptop"),
-                embeddings.embed("barberia para corte de cabello")
+                embed("quiero trabajar con mi laptop", EmbeddingInputType.QUERY),
+                embed("barberia para corte de cabello", EmbeddingInputType.PASSAGE)
         );
 
         assertTrue(coworking > haircut);
-        assertEquals(indexOfMaximum(embeddings.embed("laptop")),
-                indexOfMaximum(embeddings.embed("escritorio")));
+        assertEquals(indexOfMaximum(embed("laptop", EmbeddingInputType.QUERY)),
+                indexOfMaximum(embed("escritorio", EmbeddingInputType.PASSAGE)));
     }
 
     @Test
@@ -45,6 +47,10 @@ class MockSemanticAdaptersTest {
             score += left[index] * right[index];
         }
         return score;
+    }
+
+    private double[] embed(String value, EmbeddingInputType type) {
+        return embeddings.embed(List.of(value), type).get(0);
     }
 
     private int indexOfMaximum(double[] vector) {

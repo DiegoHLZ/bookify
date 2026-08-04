@@ -1,12 +1,14 @@
 package com.bookify.backend.discovery.semantic.adapter;
 
 import com.bookify.backend.discovery.semantic.port.EmbeddingPort;
+import com.bookify.backend.discovery.semantic.model.EmbeddingInputType;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.text.Normalizer;
 import java.util.Locale;
 import java.util.Map;
+import java.util.List;
 
 @Component
 @ConditionalOnProperty(
@@ -28,7 +30,11 @@ public class MockEmbeddingAdapter implements EmbeddingPort {
     );
 
     @Override
-    public double[] embed(String text) {
+    public List<double[]> embed(List<String> texts, EmbeddingInputType inputType) {
+        return texts.stream().map(this::embedOne).toList();
+    }
+
+    private double[] embedOne(String text) {
         double[] vector = new double[DIMENSIONS];
         for (String token : normalize(text).split(" ")) {
             if (token.isBlank()) {

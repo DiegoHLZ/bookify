@@ -6,6 +6,7 @@ import com.bookify.backend.discovery.dto.DiscoverySearchPageResponse;
 import com.bookify.backend.discovery.semantic.dto.SemanticSearchItemResponse;
 import com.bookify.backend.discovery.semantic.dto.SemanticSearchPageResponse;
 import com.bookify.backend.discovery.semantic.model.RankedSemanticCandidate;
+import com.bookify.backend.discovery.semantic.model.EmbeddingInputType;
 import com.bookify.backend.discovery.semantic.model.SemanticCandidate;
 import com.bookify.backend.discovery.semantic.model.SemanticDocument;
 import com.bookify.backend.discovery.semantic.port.EmbeddingPort;
@@ -137,11 +138,23 @@ public class SemanticSearchService {
             String query,
             Map<Long, SemanticDocument> documents
     ) {
-        double[] queryVector = embeddingPort.embed(query);
-        List<SemanticCandidate> candidates = documents.values().stream()
-                .map(document -> new SemanticCandidate(
-                        document.locationId(), document.text(),
-                        cosine(queryVector, embeddingPort.embed(document.text()))
+        double[] queryVector = requireSingleEmbedding(embeddingPort.embed(
+                List.of(query), EmbeddingInputType.QUERY
+        ));
+        List<SemanticDocument> orderedDocuments = List.copyOf(documents.values());
+        List<double[]> passageVectors = embeddingPort.embed(
+                orderedDocuments.stream().map(SemanticDocument::text).toList(),
+                EmbeddingInputType.PASSAGE
+        );
+        if (passageVectors.size() != orderedDocuments.size()) {
+            throw new IllegalStateException("Embedding provider returned an invalid batch");
+        }
+        List<SemanticCandidate> candidates = java.util.stream.IntStream
+                .range(0, orderedDocuments.size())
+                .mapToObj(index -> new SemanticCandidate(
+                        orderedDocuments.get(index).locationId(),
+                        orderedDocuments.get(index).text(),
+                        cosine(queryVector, passageVectors.get(index))
                 ))
                 .sorted(Comparator.comparingDouble(SemanticCandidate::embeddingScore)
                         .reversed()
@@ -149,6 +162,13 @@ public class SemanticSearchService {
                 .limit(rerankLimit)
                 .toList();
         return rerankingPort.rerank(query, candidates, rerankLimit);
+    }
+
+    private double[] requireSingleEmbedding(List<double[]> embeddings) {
+        if (embeddings == null || embeddings.size() != 1 || embeddings.get(0) == null) {
+            throw new IllegalStateException("Embedding provider returned an invalid query vector");
+        }
+        return embeddings.get(0);
     }
 
     private SemanticSearchPageResponse fallback(

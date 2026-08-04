@@ -87,9 +87,11 @@ Exit: zero ineligible/hallucinated results, measurable relevance improvement, ac
 
 Status: **in progress**. Provider-neutral `EmbeddingPort` and `RerankingPort` contracts,
 canonical on-read search projections, bounded hybrid ranking, a deterministic mock provider,
-feature flags, timeout handling and deterministic fallback are implemented. A labeled
-multilingual evaluation set, live NVIDIA adapters and measured relevance/latency/cost results
-remain before enabling semantic search in production.
+feature flags, timeout handling and deterministic fallback are implemented. Dataset v1 contains
+12 graded Spanish/English queries; the deterministic and mock pipelines have reproducible
+recall@3/NDCG@3 baselines. Live multilingual NVIDIA embedding/reranking adapters and an opt-in
+benchmark are implemented. A real API credential, representative user-reviewed labels and
+measured NVIDIA relevance/latency/account-specific cost results remain before production enablement.
 
 ## Phase 7 — Production readiness and MVP release
 

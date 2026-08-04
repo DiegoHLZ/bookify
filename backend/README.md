@@ -48,6 +48,9 @@ Testcontainers, applies every Flyway migration from an empty schema and verifies
 GiST indexes, exclusion constraints and the native nearby-discovery query. The container and
 its data are removed automatically after the test JVM exits.
 
+The NVIDIA live relevance benchmark is opt-in and skipped by normal CI. See
+`docs/semantic-search.md` for the required runtime-only key and benchmark command.
+
 ## Development-only endpoints
 
 Controllers under `/api/test` load only with the `dev` Spring profile. They must not be enabled in production.

@@ -1,0 +1,27 @@
+{
+  "version": "1.0.0",
+  "documents": [
+    {"id":"barber-lima","text":"Barbería Central, corte clásico y arreglo de barba en Miraflores","eligible":true},
+    {"id":"cowork-lima","text":"Nexo Coworking, escritorios y oficina compartida con wifi en San Isidro","eligible":true},
+    {"id":"football-lima","text":"Arena Norte, cancha deportiva de fútbol con reserva por hora","eligible":true},
+    {"id":"spa-lima","text":"Calma Spa, bienestar, relajación y tratamientos corporales","eligible":true},
+    {"id":"massage-lima","text":"Equilibrio, masaje terapéutico y recuperación muscular","eligible":true},
+    {"id":"meeting-room","text":"Sala Ejecutiva, ambiente privado para reuniones de equipos","eligible":true},
+    {"id":"beauty-lima","text":"Studio Belleza, manicure, uñas y cuidado facial","eligible":true},
+    {"id":"inactive-gym","text":"Gimnasio cerrado con entrenamiento deportivo","eligible":false}
+  ],
+  "queries": [
+    {"id":"es-hair","language":"es","text":"dónde puedo arreglarme el pelo","relevance":{"barber-lima":3}},
+    {"id":"es-laptop","language":"es","text":"lugar para trabajar con mi laptop","relevance":{"cowork-lima":3}},
+    {"id":"es-office","language":"es","text":"necesito una oficina por unas horas","relevance":{"cowork-lima":3}},
+    {"id":"es-soccer","language":"es","text":"quiero jugar fútbol con amigos","relevance":{"football-lima":3}},
+    {"id":"es-train","language":"es","text":"sitio deportivo para entrenar","relevance":{"football-lima":3}},
+    {"id":"es-relax","language":"es","text":"quiero relajarme y sentir bienestar","relevance":{"spa-lima":3,"massage-lima":2}},
+    {"id":"es-massage","language":"es","text":"masaje para recuperación muscular","relevance":{"massage-lima":3,"spa-lima":1}},
+    {"id":"es-meeting","language":"es","text":"sala privada para reunión de equipo","relevance":{"meeting-room":3}},
+    {"id":"es-nails","language":"es","text":"reservar manicure y cuidado de uñas","relevance":{"beauty-lima":3}},
+    {"id":"en-work","language":"en","text":"shared office desk with wifi","relevance":{"cowork-lima":3}},
+    {"id":"en-football","language":"en","text":"book a football court","relevance":{"football-lima":3}},
+    {"id":"en-wellness","language":"en","text":"place to relax and get a massage","relevance":{"spa-lima":3,"massage-lima":2}}
+  ]
+}

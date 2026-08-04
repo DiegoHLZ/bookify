@@ -39,7 +39,15 @@ bookify:
     provider: ${BOOKIFY_SEMANTIC_PROVIDER:mock}
     candidate-limit: ${BOOKIFY_SEMANTIC_CANDIDATE_LIMIT:100}
     rerank-limit: ${BOOKIFY_SEMANTIC_RERANK_LIMIT:50}
-    timeout-ms: ${BOOKIFY_SEMANTIC_TIMEOUT_MS:500}
+    timeout-ms: ${BOOKIFY_SEMANTIC_TIMEOUT_MS:5000}
+    nvidia:
+      api-key: ${NVIDIA_API_KEY:}
+      embedding-url: ${BOOKIFY_NVIDIA_EMBEDDING_URL:https://integrate.api.nvidia.com/v1/embeddings}
+      embedding-model: ${BOOKIFY_NVIDIA_EMBEDDING_MODEL:nvidia/llama-nemotron-embed-1b-v2}
+      reranking-url: ${BOOKIFY_NVIDIA_RERANKING_URL:https://ai.api.nvidia.com/v1/retrieval/nvidia/llama-nemotron-rerank-1b-v2/reranking}
+      reranking-model: ${BOOKIFY_NVIDIA_RERANKING_MODEL:nvidia/llama-nemotron-rerank-1b-v2}
+      connect-timeout-ms: ${BOOKIFY_NVIDIA_CONNECT_TIMEOUT_MS:1000}
+      read-timeout-ms: ${BOOKIFY_NVIDIA_READ_TIMEOUT_MS:5000}
 
 management:
   endpoints:

@@ -30,7 +30,7 @@ BOOKIFY_SEMANTIC_ENABLED=false
 BOOKIFY_SEMANTIC_PROVIDER=mock
 BOOKIFY_SEMANTIC_CANDIDATE_LIMIT=100
 BOOKIFY_SEMANTIC_RERANK_LIMIT=50
-BOOKIFY_SEMANTIC_TIMEOUT_MS=500
+BOOKIFY_SEMANTIC_TIMEOUT_MS=5000
 ```
 
 Semantic search is disabled by default. Invalid configuration fails at startup. Provider work
@@ -57,3 +57,65 @@ The real NVIDIA adapter must not replace this mock until a labeled multilingual 
 - acceptable p95 provider latency and cost per query;
 - successful timeout, malformed-response and provider-unavailable contract tests;
 - identical booking correctness with semantic search enabled or disabled.
+
+## Labeled dataset and metrics
+
+The versioned evaluation set lives at
+`backend/src/test/resources/search-evaluation/bookify-labeled-queries-v1.json`. Version 1
+contains 12 Spanish/English queries, graded relevance labels and one deliberately ineligible
+document. Labels are product hypotheses for regression testing; they must be reviewed with real
+users before being treated as a production relevance benchmark.
+
+`SearchQualityEvaluator` reports:
+
+- macro recall@k;
+- graded NDCG@k;
+- mean and p95 end-to-end strategy latency;
+- count of ineligible returned identifiers;
+- provider request count;
+- estimated cost when an account-specific price per 1,000 requests is configured.
+
+The reproducible local result for dataset v1 at `k=3` is:
+
+| Strategy | Recall@3 | NDCG@3 | Ineligible |
+| --- | ---: | ---: | ---: |
+| Deterministic token baseline | 0.5000 | 0.5280 | 0 |
+| Mock semantic adapters | 0.8750 | 0.8782 | 0 |
+
+Mock latency is intentionally not recorded as a product claim because it does no network or
+model inference. Its quality result validates the evaluation harness and concept fixtures only.
+
+## NVIDIA adapters
+
+Set `BOOKIFY_SEMANTIC_PROVIDER=nvidia` and provide `NVIDIA_API_KEY` at runtime. The implementation
+uses the current multilingual text models:
+
+- `nvidia/llama-nemotron-embed-1b-v2`, batching query and passage embeddings separately;
+- `nvidia/llama-nemotron-rerank-1b-v2`, reranking the bounded embedded candidates.
+
+The endpoints and model names are configurable for hosted NVIDIA APIs or an HTTPS NIM deployment.
+Remote plain HTTP endpoints are rejected; localhost HTTP remains available for contract tests and
+local NIM development. The API key is never logged or committed.
+
+Run the live benchmark explicitly:
+
+```bash
+BOOKIFY_RUN_NVIDIA_LIVE=true \
+NVIDIA_API_KEY='your-runtime-secret' \
+./mvnw -Dtest=NvidiaLiveEvaluationTest test
+```
+
+Optionally set `BOOKIFY_NVIDIA_COST_PER_1000_REQUESTS_USD` using the price applicable to the
+selected NVIDIA account/deployment. If it is absent, the report says `NOT_CONFIGURED`; Bookify
+does not invent a cost. Each evaluated query currently performs two batched embedding requests
+and one reranking request.
+
+Without `BOOKIFY_RUN_NVIDIA_LIVE=true`, the live test is skipped so CI never consumes provider
+credits. Contract tests exercise authentication, request shapes, query/passage modes, out-of-order
+embedding indexes, reranking logits and insecure configuration against a local HTTP server.
+
+Official references:
+
+- [NVIDIA llama-nemotron-embed-1b-v2 API](https://docs.api.nvidia.com/nim/re/reference/nvidia-llama-nemotron-embed-1b-v2-infer)
+- [NVIDIA llama-nemotron-rerank-1b-v2 API](https://docs.api.nvidia.com/nim/reference/nvidia-llama-nemotron-rerank-1b-v2-infer)
+- [NVIDIA reranking model card](https://build.nvidia.com/nvidia/llama-nemotron-rerank-1b-v2/modelcard)

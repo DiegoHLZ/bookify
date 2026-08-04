@@ -8,6 +8,7 @@ import com.bookify.backend.discovery.semantic.model.SemanticDocument;
 import com.bookify.backend.discovery.semantic.port.EmbeddingPort;
 import com.bookify.backend.discovery.semantic.port.RerankingPort;
 import com.bookify.backend.discovery.semantic.model.RankedSemanticCandidate;
+import com.bookify.backend.discovery.semantic.model.EmbeddingInputType;
 import com.bookify.backend.discovery.semantic.service.CanonicalSearchDocumentService;
 import com.bookify.backend.discovery.semantic.service.SemanticSearchService;
 import com.bookify.backend.discovery.service.NearbyDiscoveryService;
@@ -100,7 +101,9 @@ class SemanticSearchServiceTest {
                 1L, new SemanticDocument(1L, "consulta profesional")
         ));
         EmbeddingPort failing = new EmbeddingPort() {
-            public double[] embed(String text) { throw new IllegalStateException("offline"); }
+            public List<double[]> embed(List<String> texts, EmbeddingInputType inputType) {
+                throw new IllegalStateException("offline");
+            }
             public String providerName() { return "failing"; }
         };
         SemanticSearchService service = service(
