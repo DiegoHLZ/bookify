@@ -34,6 +34,12 @@ jwt:
 bookify:
   invitations:
     expiration-hours: ${BOOKIFY_INVITATION_EXPIRATION_HOURS:72}
+  semantic:
+    enabled: ${BOOKIFY_SEMANTIC_ENABLED:false}
+    provider: ${BOOKIFY_SEMANTIC_PROVIDER:mock}
+    candidate-limit: ${BOOKIFY_SEMANTIC_CANDIDATE_LIMIT:100}
+    rerank-limit: ${BOOKIFY_SEMANTIC_RERANK_LIMIT:50}
+    timeout-ms: ${BOOKIFY_SEMANTIC_TIMEOUT_MS:500}
 
 management:
   endpoints:

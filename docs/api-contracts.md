@@ -46,6 +46,21 @@ Pages use the deterministic ordering distance, rating average, rating count and 
 active locations and active services assigned to them. Inactive or unverified catalog data
 is never exposed.
 
+## Experimental semantic discovery
+
+`GET /api/v1/discovery/semantic-search` accepts the same parameters as deterministic
+`/search`. Hard eligibility is always calculated first by the deterministic engine. Semantic
+adapters can reorder only that bounded canonical candidate set.
+
+The response contains `mode`, `provider`, optional `fallbackReason`, `semanticLatencyMs` and
+items shaped as `{"result": <deterministic-item>, "semanticScore": 0.0..1.0}`. When the feature
+is disabled, the query is blank, the provider times out or the provider fails, `mode` becomes
+`DETERMINISTIC`, scores are `null`, and the regular deterministic contract is returned.
+
+Semantic pagination is bounded by the configured rerank window. Requests outside that window
+return `400` rather than pretending that the provider ranked candidates it never received.
+The feature is disabled by default; see [Semantic Search](./semantic-search.md).
+
 ## Transactional business onboarding
 
 `POST /api/v1/businesses`

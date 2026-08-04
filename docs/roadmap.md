@@ -85,6 +85,12 @@ by exact distance, rating average, rating count and stable identifiers.
 
 Exit: zero ineligible/hallucinated results, measurable relevance improvement, accepted latency/unit economics and safe fallback.
 
+Status: **in progress**. Provider-neutral `EmbeddingPort` and `RerankingPort` contracts,
+canonical on-read search projections, bounded hybrid ranking, a deterministic mock provider,
+feature flags, timeout handling and deterministic fallback are implemented. A labeled
+multilingual evaluation set, live NVIDIA adapters and measured relevance/latency/cost results
+remain before enabling semantic search in production.
+
 ## Phase 7 — Production readiness and MVP release
 
 - Security/accessibility/performance testing.

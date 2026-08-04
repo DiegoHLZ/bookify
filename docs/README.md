@@ -14,6 +14,7 @@ Read these documents in order:
 8. [Current State Assessment](./current-state-assessment.md) — gap between the prototype and target design.
 9. [Roadmap](./roadmap.md) — delivery sequence.
 10. [API Contracts](./api-contracts.md) — implemented HTTP contracts for frontend integration.
+11. [Semantic Search](./semantic-search.md) — provider-neutral AI retrieval, mock adapter and NVIDIA acceptance gate.
 
 When documents disagree, accepted ADRs and the most recently approved MVP scope take precedence. Code that contradicts an accepted decision is technical debt, not an implicit architecture change.
 
