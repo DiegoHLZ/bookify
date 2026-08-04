@@ -98,6 +98,18 @@ class PostgreSqlInfrastructureIntegrationTest {
                 WHERE conname = 'ex_bookings_resource_time'
                   AND contype = 'x'
                 """, Integer.class));
+
+        String pendingInvitationIndex = jdbcTemplate.queryForObject("""
+                SELECT indexdef
+                FROM pg_indexes
+                WHERE schemaname = 'public'
+                  AND indexname = 'uk_pending_invitation_business_email'
+                """, String.class);
+        assertNotNull(pendingInvitationIndex);
+        assertTrue(pendingInvitationIndex.toLowerCase().contains("unique index"));
+        assertTrue(pendingInvitationIndex.toLowerCase().contains("lower((email)::text)"));
+        assertTrue(pendingInvitationIndex.toLowerCase().contains("where"));
+        assertTrue(pendingInvitationIndex.toLowerCase().contains("pending"));
     }
 
     @Test

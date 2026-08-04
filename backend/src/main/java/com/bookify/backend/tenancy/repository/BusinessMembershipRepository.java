@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface BusinessMembershipRepository extends JpaRepository<BusinessMembership, Long> {
 
@@ -29,4 +30,22 @@ public interface BusinessMembershipRepository extends JpaRepository<BusinessMemb
             order by business.name asc
             """)
     List<BusinessMembership> findActiveBusinessesByUserEmail(@Param("email") String email);
+
+    @Query("""
+            select membership
+            from BusinessMembership membership
+            join fetch membership.user user
+            where membership.business.id = :businessId
+            order by membership.active desc, lower(user.email) asc, membership.id asc
+            """)
+    List<BusinessMembership> findMembers(@Param("businessId") Long businessId);
+
+    Optional<BusinessMembership> findByIdAndBusinessId(Long id, Long businessId);
+
+    Optional<BusinessMembership> findByBusinessIdAndUserEmailIgnoreCase(
+            Long businessId,
+            String email
+    );
+
+    long countByBusinessIdAndRoleAndActiveTrue(Long businessId, MembershipRole role);
 }

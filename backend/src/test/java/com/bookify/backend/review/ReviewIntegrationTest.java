@@ -48,7 +48,7 @@ class ReviewIntegrationTest {
     private static final String CUSTOMER = "review.customer@bookify.test";
     private static final String SECOND = "review.second@bookify.test";
     private static final String OWNER = "review.owner@bookify.test";
-    private static final Instant START = Instant.parse("2026-07-27T14:00:00Z");
+    private static final Instant START = Instant.parse("2099-07-27T14:00:00Z");
 
     @Autowired MockMvc mockMvc;
     @Autowired BookingService bookingService;

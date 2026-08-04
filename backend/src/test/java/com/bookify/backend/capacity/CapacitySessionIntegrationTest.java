@@ -48,7 +48,7 @@ class CapacitySessionIntegrationTest {
     private static final String OWNER = "owner.capacity@bookify.test";
     private static final String CUSTOMER_1 = "customer1.capacity@bookify.test";
     private static final String CUSTOMER_2 = "customer2.capacity@bookify.test";
-    private static final Instant START = Instant.parse("2026-07-27T15:00:00Z");
+    private static final Instant START = Instant.parse("2099-07-27T15:00:00Z");
 
     @Autowired MockMvc mockMvc;
     @Autowired BookingService bookingService;
@@ -108,8 +108,8 @@ class CapacitySessionIntegrationTest {
         CapacitySession session = createSession(5);
 
         mockMvc.perform(get(availabilityPath())
-                        .queryParam("from", "2026-07-27")
-                        .queryParam("to", "2026-07-27"))
+                        .queryParam("from", "2099-07-27")
+                        .queryParam("to", "2099-07-27"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.slots", hasSize(1)))
                 .andExpect(jsonPath("$.slots[0].capacitySessionId").value(session.getId()))
@@ -128,8 +128,8 @@ class CapacitySessionIntegrationTest {
         assertEquals(5, updated.getCapacityReserved());
 
         mockMvc.perform(get(availabilityPath())
-                        .queryParam("from", "2026-07-27")
-                        .queryParam("to", "2026-07-27"))
+                        .queryParam("from", "2099-07-27")
+                        .queryParam("to", "2099-07-27"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.slots", hasSize(0)));
     }

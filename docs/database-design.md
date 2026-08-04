@@ -33,6 +33,13 @@ Tenant root and brand-level profile. A business can have multiple locations, sta
 
 Many-to-many relationship between users and businesses with a role and active state. Unique (`business_id`, `user_id`).
 
+### `business_invitations`
+
+Pending and historical invitations to a business. Stores the normalized recipient email,
+assigned role, lifecycle status, expiry, inviter and optional acceptance audit fields. Only a
+SHA-256 token hash is persisted. PostgreSQL enforces at most one `PENDING` invitation per
+business and case-insensitive email; accepted, revoked and expired rows remain as history.
+
 ### `business_locations`
 
 Physical place where a booking happens. Contains address, IANA timezone and `geography(Point, 4326)` coordinates. Distance filtering uses a GiST index.
@@ -87,7 +94,7 @@ One verified rating per completed booking. Contains score 1–5, optional text, 
 
 ## Relationships
 
-- Business 1 → N locations, memberships and offerings.
+- Business 1 → N locations, memberships, invitations and offerings.
 - User 1 → N memberships, bookings and reviews.
 - Offering N ↔ N locations through `offering_locations`.
 - Location 1 → N resources, rules, exceptions, slots and bookings.

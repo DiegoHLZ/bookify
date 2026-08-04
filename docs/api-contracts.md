@@ -93,6 +93,33 @@ Categories are data-backed and can evolve without adding restaurant-specific log
 
 Returns the active businesses for which the authenticated user has an active membership, including that membership's role and the business category.
 
+## Business members, invitations and permissions
+
+Member administration uses `/api/v1/businesses/{businessId}` and always resolves the actor
+from the authenticated identity and an active membership. A business ID supplied by the client
+never grants tenant access.
+
+- `GET /members` lists active and inactive memberships. Requires `VIEW_MEMBERS`.
+- `GET /permissions/me` returns the actor's current role and effective permission names.
+- `PATCH /members/{membershipId}/role` accepts `{"role":"OWNER|ADMIN|STAFF"}`.
+- `PATCH /members/{membershipId}/status` accepts `{"active":true|false}`.
+- `POST /invitations` accepts `{"email":"member@example.com","role":"STAFF"}` and
+  returns `201 Created` with invitation metadata and a one-time raw `invitationToken`.
+- `GET /invitations` lists invitation history for the business.
+- `DELETE /invitations/{invitationId}` revokes a pending invitation.
+- `POST /api/v1/invitations/{token}/accept` accepts an invitation for the authenticated user.
+
+`OWNER` can manage every membership role. `ADMIN` can invite and manage only `STAFF`.
+`STAFF` cannot view or administer the team. Role changes and deactivation lock the business
+row, and the business must retain at least one active owner even under concurrent requests.
+
+Invitation emails are normalized. The raw 256-bit token is returned only when the invitation
+is created; the database stores only its SHA-256 hash. Acceptance requires an active account
+whose authenticated email matches the invitation. Invitations expire after 72 hours by
+default (configurable with `BOOKIFY_INVITATION_EXPIRATION_HOURS`, from 1 to 720 hours), and a
+business can have only one pending invitation per normalized email. Until the notification
+adapter is implemented, the caller is responsible for delivering the one-time token securely.
+
 ## Business locations
 
 Base path: `/api/v1/businesses/{businessId}/locations`

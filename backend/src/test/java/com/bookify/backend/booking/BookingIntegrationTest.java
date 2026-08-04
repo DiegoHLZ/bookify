@@ -40,7 +40,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -48,6 +50,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static org.hamcrest.Matchers.hasSize;
+import static java.time.temporal.TemporalAdjusters.nextOrSame;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -65,7 +68,14 @@ class BookingIntegrationTest {
     private static final String CUSTOMER_EMAIL = "customer.booking@bookify.test";
     private static final String SECOND_CUSTOMER_EMAIL = "customer2.booking@bookify.test";
     private static final String OWNER_EMAIL = "owner.booking@bookify.test";
-    private static final Instant START = Instant.parse("2026-07-27T14:00:00Z");
+    private static final Instant START = Instant.parse("2099-07-27T14:00:00Z");
+    private static final ZoneId BUSINESS_ZONE = ZoneId.of("America/Lima");
+    private static final Instant POLICY_START = LocalDate.now(BUSINESS_ZONE)
+            .plusWeeks(4)
+            .with(nextOrSame(DayOfWeek.MONDAY))
+            .atTime(9, 0)
+            .atZone(BUSINESS_ZONE)
+            .toInstant();
 
     @Autowired private MockMvc mockMvc;
     @Autowired private BookingService bookingService;
@@ -134,9 +144,9 @@ class BookingIntegrationTest {
                         .content(requestBody(START)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("CONFIRMED"))
-                .andExpect(jsonPath("$.startsAt").value("2026-07-27T14:00:00Z"))
-                .andExpect(jsonPath("$.endsAt").value("2026-07-27T15:00:00Z"))
-                .andExpect(jsonPath("$.localStart").value("2026-07-27T09:00:00"));
+                .andExpect(jsonPath("$.startsAt").value("2099-07-27T14:00:00Z"))
+                .andExpect(jsonPath("$.endsAt").value("2099-07-27T15:00:00Z"))
+                .andExpect(jsonPath("$.localStart").value("2099-07-27T09:00:00"));
 
         mockMvc.perform(post("/api/v1/bookings")
                         .header("Idempotency-Key", "booking-key-1")
@@ -165,12 +175,12 @@ class BookingIntegrationTest {
                 ));
 
         mockMvc.perform(get(availabilityPath())
-                        .queryParam("from", "2026-07-27")
-                        .queryParam("to", "2026-07-27")
+                        .queryParam("from", "2099-07-27")
+                        .queryParam("to", "2099-07-27")
                         .queryParam("intervalMinutes", "30"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.slots", hasSize(5)))
-                .andExpect(jsonPath("$.slots[0].localStart").value("2026-07-27T10:00:00"));
+                .andExpect(jsonPath("$.slots[0].localStart").value("2099-07-27T10:00:00"));
     }
 
     @Test
@@ -190,8 +200,8 @@ class BookingIntegrationTest {
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
 
         mockMvc.perform(get(availabilityPath())
-                        .queryParam("from", "2026-07-27")
-                        .queryParam("to", "2026-07-27")
+                        .queryParam("from", "2099-07-27")
+                        .queryParam("to", "2099-07-27")
                         .queryParam("intervalMinutes", "60"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.slots", hasSize(4)));
@@ -213,7 +223,7 @@ class BookingIntegrationTest {
         mockMvc.perform(post("/api/v1/bookings")
                         .header("Idempotency-Key", "outside-schedule")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody(Instant.parse("2026-07-27T20:00:00Z"))))
+                        .content(requestBody(Instant.parse("2099-07-27T20:00:00Z"))))
                 .andExpect(status().isConflict());
     }
 
@@ -359,7 +369,7 @@ class BookingIntegrationTest {
         String body = """
                 {
                   "resourceId": %d,
-                  "startsAt": "2026-07-27T15:00:00Z"
+                  "startsAt": "2099-07-27T15:00:00Z"
                 }
                 """.formatted(resource.getId());
 
@@ -367,7 +377,7 @@ class BookingIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.startsAt").value("2026-07-27T15:00:00Z"))
+                .andExpect(jsonPath("$.startsAt").value("2099-07-27T15:00:00Z"))
                 .andExpect(jsonPath("$.rescheduleCount").value(1))
                 .andExpect(jsonPath("$.lastRescheduledAt").isNotEmpty());
 
@@ -383,11 +393,11 @@ class BookingIntegrationTest {
     @Test
     @WithMockUser(username = CUSTOMER_EMAIL)
     void enforcesCancellationNoticeAndRescheduleLimit() throws Exception {
-        service.setCancellationNoticeMinutes(10080);
+        service.setCancellationNoticeMinutes(525600);
         service.setMaxReschedules(1);
         serviceRepository.saveAndFlush(service);
         Long bookingId = bookingService.create(
-                CUSTOMER_EMAIL, "policy-booking", request(START)
+                CUSTOMER_EMAIL, "policy-booking", request(POLICY_START)
         ).id();
 
         mockMvc.perform(post("/api/v1/bookings/{id}/cancel", bookingId))
@@ -399,15 +409,15 @@ class BookingIntegrationTest {
         mockMvc.perform(post("/api/v1/bookings/{id}/reschedule", bookingId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"resourceId":%d,"startsAt":"2026-07-27T15:00:00Z"}
-                                """.formatted(resource.getId())))
+                                {"resourceId":%d,"startsAt":"%s"}
+                                """.formatted(resource.getId(), POLICY_START.plusSeconds(3600))))
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/v1/bookings/{id}/reschedule", bookingId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"resourceId":%d,"startsAt":"2026-07-27T16:00:00Z"}
-                                """.formatted(resource.getId())))
+                                {"resourceId":%d,"startsAt":"%s"}
+                                """.formatted(resource.getId(), POLICY_START.plusSeconds(7200))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value(
                         "Maximum number of reschedules has been reached"
@@ -433,7 +443,7 @@ class BookingIntegrationTest {
         mockMvc.perform(post("/api/v1/bookings/{id}/reschedule", bookingId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"resourceId":%d,"startsAt":"2026-07-27T15:00:00Z"}
+                                {"resourceId":%d,"startsAt":"2099-07-27T15:00:00Z"}
                                 """.formatted(resource.getId())))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value(

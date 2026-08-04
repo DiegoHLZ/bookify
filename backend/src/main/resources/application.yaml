@@ -31,6 +31,10 @@ jwt:
   secret: ${BOOKIFY_JWT_SECRET}
   expiration: ${BOOKIFY_JWT_EXPIRATION_MS:86400000}
 
+bookify:
+  invitations:
+    expiration-hours: ${BOOKIFY_INVITATION_EXPIRATION_HOURS:72}
+
 management:
   endpoints:
     web:

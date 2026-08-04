@@ -81,4 +81,15 @@ public class BusinessMembership {
     public boolean isActive() {
         return active;
     }
+
+    public void changeRole(MembershipRole role) {
+        this.role = role;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

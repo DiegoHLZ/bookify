@@ -1,11 +1,13 @@
 package com.bookify.backend.tenancy.service;
 
 import com.bookify.backend.tenancy.model.MembershipRole;
+import com.bookify.backend.tenancy.model.MembershipPermission;
 import com.bookify.backend.tenancy.repository.BusinessMembershipRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 @Service
 public class BusinessAccessService {
@@ -33,5 +35,32 @@ public class BusinessAccessService {
         )) {
             throw new AccessDeniedException("Business management access required");
         }
+    }
+
+    public MembershipRole requireRole(Long businessId, String email) {
+        return membershipRepository.findByBusinessIdAndUserEmailIgnoreCase(businessId, email)
+                .filter(com.bookify.backend.tenancy.model.BusinessMembership::isActive)
+                .map(com.bookify.backend.tenancy.model.BusinessMembership::getRole)
+                .orElseThrow(() -> new AccessDeniedException("Business membership required"));
+    }
+
+    public Set<MembershipPermission> permissionsFor(MembershipRole role) {
+        return switch (role) {
+            case OWNER -> EnumSet.allOf(MembershipPermission.class);
+            case ADMIN -> EnumSet.of(
+                    MembershipPermission.VIEW_BUSINESS,
+                    MembershipPermission.MANAGE_BUSINESS,
+                    MembershipPermission.MANAGE_CATALOG,
+                    MembershipPermission.MANAGE_SCHEDULES,
+                    MembershipPermission.MANAGE_BOOKINGS,
+                    MembershipPermission.VIEW_MEMBERS,
+                    MembershipPermission.INVITE_STAFF,
+                    MembershipPermission.MANAGE_STAFF
+            );
+            case STAFF -> EnumSet.of(
+                    MembershipPermission.VIEW_BUSINESS,
+                    MembershipPermission.MANAGE_BOOKINGS
+            );
+        };
     }
 }
