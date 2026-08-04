@@ -85,6 +85,19 @@ The reproducible local result for dataset v1 at `k=3` is:
 Mock latency is intentionally not recorded as a product claim because it does no network or
 model inference. Its quality result validates the evaluation harness and concept fixtures only.
 
+The first live NVIDIA hosted-API evaluation, executed on 2026-08-03 with the same dataset and
+`k=3`, produced:
+
+| Strategy | Recall@3 | NDCG@3 | Mean latency | p95 latency | Requests | Estimated cost |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Deterministic token baseline | 0.5000 | 0.5280 | — | — | 0 | USD 0 |
+| NVIDIA embedding + reranking | 1.0000 | 1.0000 | 1,182.21 ms | 3,139.37 ms | 36 | Not configured |
+
+This result validates connectivity and shows a relevance improvement on the synthetic v1 labels;
+it is not yet a production claim. The dataset must grow with anonymized real-user queries, and
+latency, quota usage and account-specific cost must be measured again before enabling NVIDIA by
+default.
+
 ## NVIDIA adapters
 
 Set `BOOKIFY_SEMANTIC_PROVIDER=nvidia` and provide `NVIDIA_API_KEY` at runtime. The implementation
