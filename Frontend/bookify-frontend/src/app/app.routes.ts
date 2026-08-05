@@ -23,5 +23,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/dashboard/dashboard').then((module) => module.Dashboard),
     title: 'Mi panel | Bookify',
   },
+  {
+    path: 'negocio/nuevo',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/business/onboarding/onboarding').then((module) => module.Onboarding),
+    title: 'Configura tu negocio | Bookify',
+  },
   { path: '**', redirectTo: '' },
 ];
