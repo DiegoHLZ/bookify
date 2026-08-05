@@ -1,0 +1,97 @@
+<div class="page-shell">
+  <header class="topbar">
+    <a class="brand" routerLink="/" aria-label="Bookify, inicio">
+      <span class="brand-mark" aria-hidden="true">b</span>
+      <span>bookify</span>
+    </a>
+
+    <nav aria-label="Navegación principal">
+      <a href="#categorias">Explorar</a>
+      <a href="#negocios">Para negocios</a>
+    </nav>
+
+    <div class="header-actions">
+      <a class="text-link" routerLink="/iniciar-sesion">Iniciar sesión</a>
+      <a class="button button-dark" routerLink="/crear-cuenta">Crear cuenta</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="eyebrow"><span></span> Tu tiempo, bien reservado</div>
+      <h1>Encuentra el lugar.<br /><em>Reserva el momento.</em></h1>
+      <p class="hero-copy">
+        Servicios increíbles cerca de ti, con disponibilidad real y reserva inmediata.
+      </p>
+
+      <form class="search-card" aria-label="Buscar servicios" (submit)="$event.preventDefault()">
+        <label>
+          <span>¿Qué necesitas?</span>
+          <div class="field-line">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.3-4.3m2.3-5.2a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z"/></svg>
+            <input type="search" placeholder="Masaje, cancha, sala..." />
+          </div>
+        </label>
+        <span class="divider" aria-hidden="true"></span>
+        <label>
+          <span>¿Dónde?</span>
+          <div class="field-line">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+            <input type="text" placeholder="Lima, Miraflores..." />
+          </div>
+        </label>
+        <button class="search-button" type="submit" aria-label="Buscar">Buscar</button>
+      </form>
+
+      <div class="trust-row" aria-label="Beneficios de Bookify">
+        <span><b>✓</b> Disponibilidad en tiempo real</span>
+        <span><b>✓</b> Negocios verificados</span>
+        <span><b>✓</b> Reserva segura</span>
+      </div>
+
+      <div class="hero-orbit orbit-one"></div>
+      <div class="hero-orbit orbit-two"></div>
+      <div class="floating-card card-rating">
+        <span class="avatar">LM</span>
+        <span><strong>4.9 ★</strong><small>+200 reseñas</small></span>
+      </div>
+      <div class="floating-card card-booked">
+        <span class="check">✓</span>
+        <span><strong>Reserva confirmada</strong><small>Hoy, 4:30 p. m.</small></span>
+      </div>
+    </section>
+
+    <section class="categories section" id="categorias">
+      <div class="section-heading">
+        <div>
+          <span class="kicker">Explora a tu manera</span>
+          <h2>Todo lo que necesitas,<br />en un solo lugar.</h2>
+        </div>
+        <p>Desde tu próxima cita hasta el espacio para tu gran idea. Bookify reúne servicios distintos con una experiencia simple.</p>
+      </div>
+
+      <div class="category-grid">
+        @for (category of categories; track category.name) {
+          <article class="category-card">
+            <span class="category-icon" aria-hidden="true">{{ category.icon }}</span>
+            <div><h3>{{ category.name }}</h3><p>{{ category.detail }}</p></div>
+            <span class="arrow" aria-hidden="true">↗</span>
+          </article>
+        }
+      </div>
+    </section>
+
+    <section class="business-cta section" id="negocios">
+      <div>
+        <span class="kicker kicker-light">Bookify para negocios</span>
+        <h2>Menos administración.<br />Más tiempo para crecer.</h2>
+      </div>
+      <div class="business-copy">
+        <p>Gestiona servicios, recursos, horarios y reservas desde una plataforma diseñada para negocios reales.</p>
+        <a class="button button-light" routerLink="/crear-cuenta">Empezar ahora <span>→</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer><span>© 2026 Bookify</span><span>Reservas simples. Negocios en movimiento.</span></footer>
+</div>

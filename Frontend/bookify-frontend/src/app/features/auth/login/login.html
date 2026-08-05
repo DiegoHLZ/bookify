@@ -1,1 +1,57 @@
-<p>login works!</p>
+<main class="auth-page">
+  <a class="auth-brand" routerLink="/" aria-label="Volver al inicio de Bookify"><span>b</span>bookify</a>
+
+  <section class="auth-panel">
+    <div class="auth-intro">
+      <span class="auth-kicker">Bienvenido de vuelta</span>
+      <h1>Tu próximo momento<br /><em>empieza aquí.</em></h1>
+      <p>Accede a tus reservas y continúa descubriendo servicios hechos para ti.</p>
+      <blockquote>
+        “Todo lo que necesitaba reservar, sin llamadas ni esperas.”
+        <footer><span>AM</span><strong>Andrea M.</strong> · Cliente Bookify</footer>
+      </blockquote>
+    </div>
+
+    <div class="auth-form-wrap">
+      <div class="auth-form-heading">
+        <span class="auth-step">Acceso seguro</span>
+        <h2>Inicia sesión</h2>
+        <p>¿Aún no tienes una cuenta? <a routerLink="/crear-cuenta">Créala gratis</a></p>
+      </div>
+
+      @if (registered) {
+        <div class="notice notice-success" role="status">Tu cuenta fue creada. Ya puedes iniciar sesión.</div>
+      }
+      @if (errorMessage()) {
+        <div class="notice notice-error" role="alert">{{ errorMessage() }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <label class="control">
+          <span>Correo electrónico</span>
+          <input type="email" formControlName="email" autocomplete="email" placeholder="tu@correo.com" />
+          @if (form.controls.email.touched && form.controls.email.invalid) {
+            <small>Ingresa un correo electrónico válido.</small>
+          }
+        </label>
+
+        <label class="control">
+          <span>Contraseña</span>
+          <div class="password-control">
+            <input [type]="passwordVisible() ? 'text' : 'password'" formControlName="password" autocomplete="current-password" placeholder="Tu contraseña" />
+            <button type="button" (click)="passwordVisible.set(!passwordVisible())" [attr.aria-label]="passwordVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'">{{ passwordVisible() ? 'Ocultar' : 'Mostrar' }}</button>
+          </div>
+          @if (form.controls.password.touched && form.controls.password.invalid) {
+            <small>Ingresa tu contraseña.</small>
+          }
+        </label>
+
+        <button class="auth-submit" type="submit" [disabled]="loading()">
+          <span>{{ loading() ? 'Ingresando…' : 'Ingresar a Bookify' }}</span><b aria-hidden="true">→</b>
+        </button>
+      </form>
+
+      <p class="auth-security"><span>✓</span> Tu sesión se almacena únicamente durante esta visita.</p>
+    </div>
+  </section>
+</main>
