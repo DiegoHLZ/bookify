@@ -1,1 +1,50 @@
-<p>register works!</p>
+<main class="auth-page">
+  <a class="auth-brand" routerLink="/" aria-label="Volver al inicio de Bookify"><span>b</span>bookify</a>
+
+  <section class="auth-panel">
+    <div class="auth-intro register-intro">
+      <span class="auth-kicker">Empieza hoy</span>
+      <h1>Una cuenta.<br /><em>Muchas posibilidades.</em></h1>
+      <p>Reserva como cliente o configura tu negocio cuando estés listo. Tu cuenta Bookify funciona para ambos.</p>
+      <ul>
+        <li><b>01</b><span><strong>Descubre</strong> servicios cerca de ti</span></li>
+        <li><b>02</b><span><strong>Reserva</strong> con disponibilidad real</span></li>
+        <li><b>03</b><span><strong>Gestiona</strong> todo desde un solo lugar</span></li>
+      </ul>
+    </div>
+
+    <div class="auth-form-wrap">
+      <div class="auth-form-heading">
+        <span class="auth-step">Cuenta personal</span>
+        <h2>Crea tu cuenta</h2>
+        <p>¿Ya tienes una? <a routerLink="/iniciar-sesion">Inicia sesión</a></p>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="notice notice-error" role="alert">{{ errorMessage() }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="control-row">
+          <label class="control"><span>Nombre</span><input type="text" formControlName="firstName" autocomplete="given-name" placeholder="Diego" />
+            @if (form.controls.firstName.touched && form.controls.firstName.invalid) { <small>Ingresa tu nombre.</small> }
+          </label>
+          <label class="control"><span>Apellido</span><input type="text" formControlName="lastName" autocomplete="family-name" placeholder="Huincho" />
+            @if (form.controls.lastName.touched && form.controls.lastName.invalid) { <small>Ingresa tu apellido.</small> }
+          </label>
+        </div>
+        <label class="control"><span>Correo electrónico</span><input type="email" formControlName="email" autocomplete="email" placeholder="tu@correo.com" />
+          @if (form.controls.email.touched && form.controls.email.invalid) { <small>Ingresa un correo electrónico válido.</small> }
+        </label>
+        <label class="control">
+          <span>Contraseña</span>
+          <div class="password-control"><input [type]="passwordVisible() ? 'text' : 'password'" formControlName="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" /><button type="button" (click)="passwordVisible.set(!passwordVisible())">{{ passwordVisible() ? 'Ocultar' : 'Mostrar' }}</button></div>
+          @if (form.controls.password.touched && form.controls.password.invalid) { <small>Usa al menos 8 caracteres.</small> }
+        </label>
+
+        <button class="auth-submit" type="submit" [disabled]="loading()"><span>{{ loading() ? 'Creando cuenta…' : 'Crear mi cuenta' }}</span><b aria-hidden="true">→</b></button>
+      </form>
+      <p class="legal">Al continuar, aceptas los términos y la política de privacidad de Bookify.</p>
+    </div>
+  </section>
+</main>
