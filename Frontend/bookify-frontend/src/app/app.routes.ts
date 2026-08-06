@@ -29,5 +29,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/business/onboarding/onboarding').then((module) => module.Onboarding),
     title: 'Configura tu negocio | Bookify',
   },
+  {
+    path: 'negocios/:businessId',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/business/management/business-management').then((module) => module.BusinessManagement),
+    title: 'Gestiona tu negocio | Bookify',
+  },
   { path: '**', redirectTo: '' },
 ];

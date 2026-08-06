@@ -39,6 +39,62 @@ export interface MyBusiness {
   membershipRole: string;
 }
 
+export type BookingMode = 'EXCLUSIVE_RESOURCE' | 'CAPACITY_SESSION';
+export type SupportedCurrency = 'PEN' | 'USD' | 'EUR';
+
+export interface BusinessLocation {
+  id: number;
+  businessId: number;
+  name: string;
+  address: string;
+  city: string;
+  countryCode: string;
+  timezone: string;
+  latitude: number;
+  longitude: number;
+  active: boolean;
+  coordinatesVerified: boolean;
+  coordinatesVerifiedAt: string | null;
+  coordinateSource: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateServiceOfferingRequest {
+  name: string;
+  description: string | null;
+  durationMinutes: number;
+  price: number;
+  currency: SupportedCurrency;
+  locationIds: number[];
+  bookingMode: BookingMode;
+  customerCancellationAllowed: boolean;
+  cancellationNoticeMinutes: number;
+  customerRescheduleAllowed: boolean;
+  rescheduleNoticeMinutes: number;
+  maxReschedules: number;
+}
+
+export interface ServiceOffering {
+  id: number;
+  name: string;
+  description: string | null;
+  durationMinutes: number;
+  price: number;
+  currency: SupportedCurrency;
+  active: boolean;
+  bookingMode: BookingMode;
+  customerCancellationAllowed: boolean;
+  cancellationNoticeMinutes: number | null;
+  customerRescheduleAllowed: boolean;
+  rescheduleNoticeMinutes: number | null;
+  maxReschedules: number | null;
+  businessId: number;
+  locationIds: number[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface BusinessCategoryOption {
   code: string;
   name: string;

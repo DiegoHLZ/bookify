@@ -17,7 +17,7 @@
       @if (businesses().length > 0) {
         <div class="business-grid">
           @for (business of businesses(); track business.id) {
-            <article class="business-card"><div class="business-letter">{{ business.name.charAt(0).toUpperCase() }}</div><span>{{ categoryName(business.categoryCode) }}</span><h3>{{ business.name }}</h3><p>Tu rol: {{ business.membershipRole === 'OWNER' ? 'Propietario' : business.membershipRole }}</p><button type="button">Administrar <b>→</b></button></article>
+            <article class="business-card"><div class="business-letter">{{ business.name.charAt(0).toUpperCase() }}</div><span>{{ categoryName(business.categoryCode) }}</span><h3>{{ business.name }}</h3><p>Tu rol: {{ business.membershipRole === 'OWNER' ? 'Propietario' : business.membershipRole }}</p><a class="manage-link" [routerLink]="['/negocios', business.id]">Administrar <b>→</b></a></article>
           }
         </div>
       } @else {

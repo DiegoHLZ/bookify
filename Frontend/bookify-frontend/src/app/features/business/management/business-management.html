@@ -1,0 +1,70 @@
+<main class="management-page">
+  <header class="management-header">
+    <a class="brand" routerLink="/"><span>b</span>bookify</a>
+    <a class="back-link" routerLink="/panel">← Volver al panel</a>
+  </header>
+
+  @if (loading()) {
+    <section class="state" role="status"><span class="spinner"></span><p>Cargando tu negocio…</p></section>
+  } @else if (loadError()) {
+    <section class="state error-state"><span>!</span><h1>No pudimos abrir este negocio</h1><p>{{ loadError() }}</p><button type="button" (click)="load()">Volver a intentar</button></section>
+  } @else if (business(); as selectedBusiness) {
+    <section class="management-shell">
+      <aside>
+        <span class="eyebrow">Panel del negocio</span>
+        <h1>{{ selectedBusiness.name }}</h1>
+        <p>{{ selectedBusiness.membershipRole === 'OWNER' ? 'Propietario' : selectedBusiness.membershipRole }}</p>
+        <nav aria-label="Gestión del negocio">
+          <a class="active" href="#servicios"><span>01</span> Servicios</a>
+          <span class="future"><b>02</b> Recursos <small>Próximamente</small></span>
+          <span class="future"><b>03</b> Horarios <small>Próximamente</small></span>
+        </nav>
+        <div class="location-summary"><span>Sedes activas</span><strong>{{ activeLocations().length }}</strong></div>
+      </aside>
+
+      <div class="content" id="servicios">
+        <div class="content-heading">
+          <div><span class="eyebrow">Catálogo</span><h2>Servicios</h2><p>Define lo que tus clientes podrán reservar.</p></div>
+          @if (canManage() && activeLocations().length > 0) {
+            <button type="button" (click)="openForm()">Nuevo servicio <b>＋</b></button>
+          }
+        </div>
+
+        @if (activeLocations().length === 0) {
+          <div class="empty"><span>⌖</span><h3>Necesitas una sede activa</h3><p>Los servicios deben estar asociados al menos a una ubicación activa.</p></div>
+        } @else if (services().length === 0) {
+          <div class="empty"><span>✦</span><h3>Crea tu primer servicio</h3><p>Agrega duración, precio, sede y modalidad de reserva.</p>@if (canManage()) {<button type="button" (click)="openForm()">Crear servicio →</button>}</div>
+        } @else {
+          <div class="service-grid">
+            @for (service of services(); track service.id) {
+              <article class="service-card">
+                <div class="service-top"><span [class.inactive]="!service.active">{{ service.active ? 'Activo' : 'Inactivo' }}</span><b>{{ formatPrice(service) }}</b></div>
+                <h3>{{ service.name }}</h3>
+                <p>{{ service.description || 'Sin descripción' }}</p>
+                <dl><div><dt>Duración</dt><dd>{{ service.durationMinutes }} min</dd></div><div><dt>Modalidad</dt><dd>{{ bookingModeName(service.bookingMode) }}</dd></div></dl>
+              </article>
+            }
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  @if (formOpen()) {
+    <div class="modal-backdrop" role="presentation" (click)="closeForm()">
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="service-form-title" (click)="$event.stopPropagation()">
+        <div class="modal-heading"><div><span class="eyebrow">Nuevo servicio</span><h2 id="service-form-title">Configura la reserva</h2></div><button type="button" aria-label="Cerrar formulario" (click)="closeForm()">×</button></div>
+        @if (formError()) {<div class="notice" role="alert">{{ formError() }}</div>}
+        <form [formGroup]="serviceForm" (ngSubmit)="submit()">
+          <label><span>Nombre</span><input formControlName="name" placeholder="Ej. Corte clásico">@if (serviceForm.controls.name.touched && serviceForm.controls.name.invalid) {<small>Ingresa un nombre válido.</small>}</label>
+          <label><span>Descripción <small>Opcional</small></span><textarea formControlName="description" placeholder="Describe brevemente el servicio"></textarea></label>
+          <div class="form-row"><label><span>Duración</span><input type="number" formControlName="durationMinutes" min="1" max="1440"></label><label><span>Precio</span><input type="number" formControlName="price" min="0" step="0.01"></label></div>
+          <div class="form-row"><label><span>Moneda</span><select formControlName="currency"><option value="PEN">PEN — Soles</option><option value="USD">USD — Dólares</option><option value="EUR">EUR — Euros</option></select></label><label><span>Modalidad</span><select formControlName="bookingMode"><option value="EXCLUSIVE_RESOURCE">Recurso exclusivo</option><option value="CAPACITY_SESSION">Cupo compartido</option></select></label></div>
+          <label><span>Sede</span><select formControlName="locationId"><option [ngValue]="null" disabled>Selecciona una sede</option>@for (location of activeLocations(); track location.id) {<option [ngValue]="location.id">{{ location.name }} — {{ location.city }}</option>}</select></label>
+          <p class="policy-note">Política inicial: cancelación y reprogramación hasta 2 horas antes, máximo 2 reprogramaciones. Podrás personalizarla después.</p>
+          <div class="modal-actions"><button type="button" class="secondary" (click)="closeForm()">Cancelar</button><button type="submit" [disabled]="saving()">{{ saving() ? 'Creando…' : 'Crear servicio' }} <b>→</b></button></div>
+        </form>
+      </section>
+    </div>
+  }
+</main>

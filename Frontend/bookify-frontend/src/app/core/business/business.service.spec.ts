@@ -38,4 +38,31 @@ describe('BusinessService', () => {
     expect(request.request.body).toEqual(payload);
     request.flush({ ...payload, id: 1, membershipRole: 'OWNER', location: { ...payload.location, id: 1 } });
   });
+
+  it('loads locations and services for the selected business', () => {
+    service.listLocations(7).subscribe();
+    service.listServices(7).subscribe();
+
+    const locations = http.expectOne('/api/v1/businesses/7/locations');
+    const services = http.expectOne('/api/v1/businesses/7/services');
+    expect(locations.request.method).toBe('GET');
+    expect(services.request.method).toBe('GET');
+    locations.flush([]);
+    services.flush([]);
+  });
+
+  it('creates a service inside the selected tenant', () => {
+    const payload = {
+      name: 'Corte clásico', description: null, durationMinutes: 45, price: 35,
+      currency: 'PEN' as const, locationIds: [3], bookingMode: 'EXCLUSIVE_RESOURCE' as const,
+      customerCancellationAllowed: true, cancellationNoticeMinutes: 120,
+      customerRescheduleAllowed: true, rescheduleNoticeMinutes: 120, maxReschedules: 2,
+    };
+    service.createService(7, payload).subscribe();
+
+    const request = http.expectOne('/api/v1/businesses/7/services');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual(payload);
+    request.flush({ ...payload, id: 9, active: true, businessId: 7, createdAt: '', updatedAt: '' });
+  });
 });
