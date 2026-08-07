@@ -15,36 +15,65 @@
         <h1>{{ selectedBusiness.name }}</h1>
         <p>{{ selectedBusiness.membershipRole === 'OWNER' ? 'Propietario' : selectedBusiness.membershipRole }}</p>
         <nav aria-label="Gestión del negocio">
-          <a class="active" href="#servicios"><span>01</span> Servicios</a>
-          <span class="future"><b>02</b> Recursos <small>Próximamente</small></span>
+          <button type="button" [class.active]="section() === 'services'" (click)="showSection('services')"><span>01</span> Servicios</button>
+          <button type="button" [class.active]="section() === 'resources'" (click)="showSection('resources')"><span>02</span> Recursos</button>
           <span class="future"><b>03</b> Horarios <small>Próximamente</small></span>
         </nav>
         <div class="location-summary"><span>Sedes activas</span><strong>{{ activeLocations().length }}</strong></div>
       </aside>
 
-      <div class="content" id="servicios">
-        <div class="content-heading">
-          <div><span class="eyebrow">Catálogo</span><h2>Servicios</h2><p>Define lo que tus clientes podrán reservar.</p></div>
-          @if (canManage() && activeLocations().length > 0) {
-            <button type="button" (click)="openForm()">Nuevo servicio <b>＋</b></button>
-          }
-        </div>
-
-        @if (activeLocations().length === 0) {
-          <div class="empty"><span>⌖</span><h3>Necesitas una sede activa</h3><p>Los servicios deben estar asociados al menos a una ubicación activa.</p></div>
-        } @else if (services().length === 0) {
-          <div class="empty"><span>✦</span><h3>Crea tu primer servicio</h3><p>Agrega duración, precio, sede y modalidad de reserva.</p>@if (canManage()) {<button type="button" (click)="openForm()">Crear servicio →</button>}</div>
-        } @else {
-          <div class="service-grid">
-            @for (service of services(); track service.id) {
-              <article class="service-card">
-                <div class="service-top"><span [class.inactive]="!service.active">{{ service.active ? 'Activo' : 'Inactivo' }}</span><b>{{ formatPrice(service) }}</b></div>
-                <h3>{{ service.name }}</h3>
-                <p>{{ service.description || 'Sin descripción' }}</p>
-                <dl><div><dt>Duración</dt><dd>{{ service.durationMinutes }} min</dd></div><div><dt>Modalidad</dt><dd>{{ bookingModeName(service.bookingMode) }}</dd></div></dl>
-              </article>
+      <div class="content">
+        @if (section() === 'services') {
+          <div class="content-heading">
+            <div><span class="eyebrow">Catálogo</span><h2>Servicios</h2><p>Define lo que tus clientes podrán reservar.</p></div>
+            @if (canManage() && activeLocations().length > 0) {
+              <button type="button" (click)="openForm()">Nuevo servicio <b>＋</b></button>
             }
           </div>
+
+          @if (activeLocations().length === 0) {
+            <div class="empty"><span>⌖</span><h3>Necesitas una sede activa</h3><p>Los servicios deben estar asociados al menos a una ubicación activa.</p></div>
+          } @else if (services().length === 0) {
+            <div class="empty"><span>✦</span><h3>Crea tu primer servicio</h3><p>Agrega duración, precio, sede y modalidad de reserva.</p>@if (canManage()) {<button type="button" (click)="openForm()">Crear servicio →</button>}</div>
+          } @else {
+            <div class="service-grid">
+              @for (service of services(); track service.id) {
+                <article class="service-card">
+                  <div class="service-top"><span [class.inactive]="!service.active">{{ service.active ? 'Activo' : 'Inactivo' }}</span><b>{{ formatPrice(service) }}</b></div>
+                  <h3>{{ service.name }}</h3>
+                  <p>{{ service.description || 'Sin descripción' }}</p>
+                  <dl><div><dt>Duración</dt><dd>{{ service.durationMinutes }} min</dd></div><div><dt>Modalidad</dt><dd>{{ bookingModeName(service.bookingMode) }}</dd></div></dl>
+                </article>
+              }
+            </div>
+          }
+        } @else {
+          <div class="content-heading">
+            <div><span class="eyebrow">Disponibilidad</span><h2>Recursos</h2><p>Administra quién o qué puede recibir cada reserva.</p></div>
+            @if (canManage() && activeLocations().length > 0) {
+              <button type="button" (click)="openResourceForm()">Nuevo recurso <b>＋</b></button>
+            }
+          </div>
+
+          @if (activeLocations().length === 0) {
+            <div class="empty"><span>⌖</span><h3>Necesitas una sede activa</h3><p>Cada recurso debe pertenecer a una ubicación activa.</p></div>
+          } @else if (resources().length === 0) {
+            <div class="empty"><span>◇</span><h3>Crea tu primer recurso</h3><p>Puede ser un profesional, cancha, sala, escritorio o equipo.</p>@if (canManage()) {<button type="button" (click)="openResourceForm()">Crear recurso →</button>}</div>
+          } @else {
+            <div class="resource-grid">
+              @for (resource of resources(); track resource.id) {
+                <article class="resource-card">
+                  <div class="resource-icon">{{ resource.name.charAt(0).toUpperCase() }}</div>
+                  <div class="resource-info"><span>{{ resourceTypeName(resource.type) }} · {{ locationName(resource.locationId) }}</span><h3>{{ resource.name }}</h3><p>{{ resource.description || 'Sin descripción' }}</p><small>Capacidad: {{ resource.capacity }}</small></div>
+                  @if (canManage()) {
+                    <button type="button" class="status-toggle" [class.inactive]="!resource.active" [disabled]="resourceActionId() !== null" (click)="toggleResource(resource)">{{ resourceActionId() === resource.id ? 'Guardando…' : (resource.active ? 'Activo' : 'Inactivo') }}</button>
+                  } @else {
+                    <span class="read-status" [class.inactive]="!resource.active">{{ resource.active ? 'Activo' : 'Inactivo' }}</span>
+                  }
+                </article>
+              }
+            </div>
+          }
         }
       </div>
     </section>
@@ -63,6 +92,23 @@
           <label><span>Sede</span><select formControlName="locationId"><option [ngValue]="null" disabled>Selecciona una sede</option>@for (location of activeLocations(); track location.id) {<option [ngValue]="location.id">{{ location.name }} — {{ location.city }}</option>}</select></label>
           <p class="policy-note">Política inicial: cancelación y reprogramación hasta 2 horas antes, máximo 2 reprogramaciones. Podrás personalizarla después.</p>
           <div class="modal-actions"><button type="button" class="secondary" (click)="closeForm()">Cancelar</button><button type="submit" [disabled]="saving()">{{ saving() ? 'Creando…' : 'Crear servicio' }} <b>→</b></button></div>
+        </form>
+      </section>
+    </div>
+  }
+
+  @if (resourceFormOpen()) {
+    <div class="modal-backdrop" role="presentation" (click)="closeResourceForm()">
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="resource-form-title" (click)="$event.stopPropagation()">
+        <div class="modal-heading"><div><span class="eyebrow">Nuevo recurso</span><h2 id="resource-form-title">Añade capacidad</h2></div><button type="button" aria-label="Cerrar formulario de recurso" (click)="closeResourceForm()">×</button></div>
+        @if (formError()) {<div class="notice" role="alert">{{ formError() }}</div>}
+        <form [formGroup]="resourceForm" (ngSubmit)="submitResource()">
+          <label><span>Nombre</span><input formControlName="name" placeholder="Ej. Ana Torres o Cancha 1">@if (resourceForm.controls.name.touched && resourceForm.controls.name.invalid) {<small>Ingresa un nombre válido.</small>}</label>
+          <label><span>Descripción <small>Opcional</small></span><textarea formControlName="description" placeholder="Especialidad, características o referencia"></textarea></label>
+          <div class="form-row"><label><span>Tipo de recurso</span><select formControlName="type">@for (type of resourceTypes; track type.code) {<option [value]="type.code">{{ type.name }}</option>}</select></label><label><span>Capacidad</span><input type="number" formControlName="capacity" min="1" max="10000"></label></div>
+          <label><span>Sede</span><select formControlName="locationId"><option [ngValue]="null" disabled>Selecciona una sede</option>@for (location of activeLocations(); track location.id) {<option [ngValue]="location.id">{{ location.name }} — {{ location.city }}</option>}</select></label>
+          <p class="policy-note">La capacidad representa cuántas reservas simultáneas admite este recurso. Para un profesional normalmente es 1.</p>
+          <div class="modal-actions"><button type="button" class="secondary" (click)="closeResourceForm()">Cancelar</button><button type="submit" [disabled]="saving()">{{ saving() ? 'Creando…' : 'Crear recurso' }} <b>→</b></button></div>
         </form>
       </section>
     </div>

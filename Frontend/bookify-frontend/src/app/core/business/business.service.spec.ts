@@ -65,4 +65,29 @@ describe('BusinessService', () => {
     expect(request.request.body).toEqual(payload);
     request.flush({ ...payload, id: 9, active: true, businessId: 7, createdAt: '', updatedAt: '' });
   });
+
+  it('loads and creates resources inside a business location', () => {
+    const payload = { name: 'Ana', description: null, type: 'PROFESSIONAL' as const, capacity: 1 };
+    service.listResources(7, 3).subscribe();
+    service.createResource(7, 3, payload).subscribe();
+
+    const requests = http.match('/api/v1/businesses/7/locations/3/resources');
+    const listRequest = requests.find((request) => request.request.method === 'GET');
+    const createRequest = requests.find((request) => request.request.method === 'POST');
+    expect(requests).toHaveLength(2);
+    expect(listRequest).toBeDefined();
+    expect(createRequest).toBeDefined();
+    expect(createRequest?.request.body).toEqual(payload);
+    listRequest?.flush([]);
+    createRequest?.flush({ ...payload, id: 5, businessId: 7, locationId: 3, active: true, createdAt: '', updatedAt: '' });
+  });
+
+  it('changes resource availability status', () => {
+    service.changeResourceStatus(7, 3, 5, false).subscribe();
+
+    const request = http.expectOne('/api/v1/businesses/7/locations/3/resources/5/status');
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.body).toEqual({ active: false });
+    request.flush({});
+  });
 });

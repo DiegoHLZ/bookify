@@ -41,6 +41,7 @@ export interface MyBusiness {
 
 export type BookingMode = 'EXCLUSIVE_RESOURCE' | 'CAPACITY_SESSION';
 export type SupportedCurrency = 'PEN' | 'USD' | 'EUR';
+export type ResourceType = 'PROFESSIONAL' | 'COURT' | 'ROOM' | 'DESK' | 'EQUIPMENT';
 
 export interface BusinessLocation {
   id: number;
@@ -94,6 +95,40 @@ export interface ServiceOffering {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface UpsertBookableResourceRequest {
+  name: string;
+  description: string | null;
+  type: ResourceType;
+  capacity: number;
+}
+
+export interface BookableResource {
+  id: number;
+  businessId: number;
+  locationId: number;
+  name: string;
+  description: string | null;
+  type: ResourceType;
+  capacity: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ResourceTypeOption {
+  code: ResourceType;
+  name: string;
+  description: string;
+}
+
+export const RESOURCE_TYPES: readonly ResourceTypeOption[] = [
+  { code: 'PROFESSIONAL', name: 'Profesional', description: 'Persona que presta el servicio' },
+  { code: 'COURT', name: 'Cancha', description: 'Espacio deportivo reservable' },
+  { code: 'ROOM', name: 'Sala', description: 'Consultorio, cabina o sala' },
+  { code: 'DESK', name: 'Escritorio', description: 'Puesto individual de trabajo' },
+  { code: 'EQUIPMENT', name: 'Equipo', description: 'Máquina o equipo especializado' },
+];
 
 export interface BusinessCategoryOption {
   code: string;

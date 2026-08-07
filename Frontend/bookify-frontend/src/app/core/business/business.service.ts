@@ -3,11 +3,13 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   BusinessLocation,
+  BookableResource,
   BusinessOnboardingResponse,
   CreateBusinessRequest,
   CreateServiceOfferingRequest,
   MyBusiness,
   ServiceOffering,
+  UpsertBookableResourceRequest,
 } from './business.models';
 
 @Injectable({ providedIn: 'root' })
@@ -32,5 +34,17 @@ export class BusinessService {
 
   createService(businessId: number, request: CreateServiceOfferingRequest): Observable<ServiceOffering> {
     return this.http.post<ServiceOffering>(`/api/v1/businesses/${businessId}/services`, request);
+  }
+
+  listResources(businessId: number, locationId: number): Observable<BookableResource[]> {
+    return this.http.get<BookableResource[]>(`/api/v1/businesses/${businessId}/locations/${locationId}/resources`);
+  }
+
+  createResource(businessId: number, locationId: number, request: UpsertBookableResourceRequest): Observable<BookableResource> {
+    return this.http.post<BookableResource>(`/api/v1/businesses/${businessId}/locations/${locationId}/resources`, request);
+  }
+
+  changeResourceStatus(businessId: number, locationId: number, resourceId: number, active: boolean): Observable<BookableResource> {
+    return this.http.patch<BookableResource>(`/api/v1/businesses/${businessId}/locations/${locationId}/resources/${resourceId}/status`, { active });
   }
 }
