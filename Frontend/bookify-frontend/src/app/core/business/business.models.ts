@@ -116,6 +116,11 @@ export interface BookableResource {
   updatedAt: string;
 }
 
+export interface ServiceResourceAssignment {
+  serviceId: number;
+  resourceIds: number[];
+}
+
 export interface ResourceTypeOption {
   code: ResourceType;
   name: string;

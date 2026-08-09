@@ -20,7 +20,7 @@ import { BusinessService } from '../../../core/business/business.service';
   selector: 'app-business-management',
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './business-management.html',
-  styleUrl: './business-management.css',
+  styleUrls: ['./business-management.css', './business-management-assignment.css'],
 })
 export class BusinessManagement {
   private readonly businessService = inject(BusinessService);
@@ -39,8 +39,22 @@ export class BusinessManagement {
   readonly formOpen = signal(false);
   readonly resourceFormOpen = signal(false);
   readonly resourceActionId = signal<number | null>(null);
+  readonly assignmentService = signal<ServiceOffering | null>(null);
+  readonly assignedResourceIds = signal<Set<number>>(new Set());
+  readonly unavailableAssignmentIds = signal<number[]>([]);
+  readonly assignmentLoading = signal(false);
+  readonly assignmentSaving = signal(false);
   readonly canManage = computed(() => ['OWNER', 'ADMIN'].includes(this.business()?.membershipRole ?? ''));
   readonly activeLocations = computed(() => this.locations().filter((location) => location.active));
+  readonly eligibleResources = computed(() => {
+    const service = this.assignmentService();
+    if (!service) {
+      return [];
+    }
+    return this.resources().filter((resource) =>
+      resource.active && service.locationIds.includes(resource.locationId),
+    );
+  });
   readonly resourceTypes = RESOURCE_TYPES;
 
   readonly serviceForm = new FormGroup({
@@ -216,6 +230,80 @@ export class BusinessManagement {
       ),
       error: (error: HttpErrorResponse) => this.formError.set(this.readError(error, 'No pudimos cambiar el estado del recurso.')),
     });
+  }
+
+  openAssignment(service: ServiceOffering): void {
+    if (!this.canManage() || this.assignmentLoading()) {
+      return;
+    }
+    this.assignmentService.set(service);
+    this.assignedResourceIds.set(new Set());
+    this.unavailableAssignmentIds.set([]);
+    this.assignmentLoading.set(true);
+    this.formError.set(null);
+    this.businessService.getServiceResources(this.businessId, service.id)
+      .pipe(finalize(() => this.assignmentLoading.set(false)))
+      .subscribe({
+        next: (assignment) => {
+          const eligibleIds = new Set(this.eligibleResources().map((resource) => resource.id));
+          this.assignedResourceIds.set(new Set(
+            assignment.resourceIds.filter((resourceId) => eligibleIds.has(resourceId)),
+          ));
+          this.unavailableAssignmentIds.set(
+            assignment.resourceIds.filter((resourceId) => !eligibleIds.has(resourceId)),
+          );
+        },
+        error: (error: HttpErrorResponse) => {
+          this.formError.set(this.readError(error, 'No pudimos cargar los recursos asignados.'));
+          this.assignmentService.set(null);
+        },
+      });
+  }
+
+  closeAssignment(): void {
+    if (!this.assignmentSaving()) {
+      this.assignmentService.set(null);
+      this.assignedResourceIds.set(new Set());
+      this.unavailableAssignmentIds.set([]);
+      this.formError.set(null);
+    }
+  }
+
+  toggleAssignment(resourceId: number): void {
+    if (this.assignmentLoading() || this.assignmentSaving()) {
+      return;
+    }
+    this.assignedResourceIds.update((current) => {
+      const next = new Set(current);
+      if (next.has(resourceId)) {
+        next.delete(resourceId);
+      } else {
+        next.add(resourceId);
+      }
+      return next;
+    });
+  }
+
+  saveAssignment(): void {
+    const service = this.assignmentService();
+    if (!service || !this.canManage() || this.assignmentLoading() || this.assignmentSaving()) {
+      return;
+    }
+    const resourceIds = [...this.assignedResourceIds()].sort((left, right) => left - right);
+    this.assignmentSaving.set(true);
+    this.formError.set(null);
+    this.businessService.replaceServiceResources(this.businessId, service.id, resourceIds)
+      .pipe(finalize(() => this.assignmentSaving.set(false)))
+      .subscribe({
+        next: (assignment) => {
+          this.assignedResourceIds.set(new Set(assignment.resourceIds));
+          this.unavailableAssignmentIds.set([]);
+          this.assignmentService.set(null);
+        },
+        error: (error: HttpErrorResponse) => this.formError.set(
+          this.readError(error, 'No pudimos guardar la asignación de recursos.'),
+        ),
+      });
   }
 
   formatPrice(service: ServiceOffering): string {

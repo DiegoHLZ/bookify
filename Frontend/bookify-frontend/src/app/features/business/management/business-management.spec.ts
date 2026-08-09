@@ -16,6 +16,8 @@ describe('BusinessManagement', () => {
   const createService = vi.fn();
   const createResource = vi.fn();
   const changeResourceStatus = vi.fn();
+  const getServiceResources = vi.fn();
+  const replaceServiceResources = vi.fn();
 
   beforeEach(async () => {
     listMine.mockReset().mockReturnValue(of([{ id: 7, name: 'Studio Norte', slug: 'studio-norte', categoryCode: 'BEAUTY_SALON', membershipRole: 'OWNER' }]));
@@ -25,13 +27,15 @@ describe('BusinessManagement', () => {
     createService.mockReset();
     createResource.mockReset();
     changeResourceStatus.mockReset();
+    getServiceResources.mockReset();
+    replaceServiceResources.mockReset();
 
     await TestBed.configureTestingModule({
       imports: [BusinessManagement],
       providers: [
         provideRouter([]),
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ businessId: '7' }) } } },
-        { provide: BusinessService, useValue: { listMine, listLocations, listServices, listResources, createService, createResource, changeResourceStatus } },
+        { provide: BusinessService, useValue: { listMine, listLocations, listServices, listResources, createService, createResource, changeResourceStatus, getServiceResources, replaceServiceResources } },
       ],
     }).compileComponents();
 
@@ -86,5 +90,35 @@ describe('BusinessManagement', () => {
 
     expect(changeResourceStatus).toHaveBeenCalledWith(7, 3, 12, false);
     expect(component.resources()[0]?.active).toBe(false);
+  });
+
+  it('loads current assignments and only offers active resources at service locations', () => {
+    const service = { id: 9, name: 'Corte clásico', description: null, durationMinutes: 45, price: 35, currency: 'PEN' as const, active: true, bookingMode: 'EXCLUSIVE_RESOURCE' as const, customerCancellationAllowed: true, cancellationNoticeMinutes: 120, customerRescheduleAllowed: true, rescheduleNoticeMinutes: 120, maxReschedules: 2, businessId: 7, locationIds: [3], createdAt: '', updatedAt: '' };
+    component.resources.set([
+      { id: 12, businessId: 7, locationId: 3, name: 'Ana Torres', description: null, type: 'PROFESSIONAL', capacity: 1, active: true, createdAt: '', updatedAt: '' },
+      { id: 13, businessId: 7, locationId: 3, name: 'Inactivo', description: null, type: 'PROFESSIONAL', capacity: 1, active: false, createdAt: '', updatedAt: '' },
+      { id: 14, businessId: 7, locationId: 8, name: 'Otra sede', description: null, type: 'ROOM', capacity: 1, active: true, createdAt: '', updatedAt: '' },
+    ]);
+    getServiceResources.mockReturnValue(of({ serviceId: 9, resourceIds: [12, 13] }));
+
+    component.openAssignment(service);
+
+    expect(getServiceResources).toHaveBeenCalledWith(7, 9);
+    expect(component.assignedResourceIds().has(12)).toBe(true);
+    expect(component.assignedResourceIds().has(13)).toBe(false);
+    expect(component.unavailableAssignmentIds()).toEqual([13]);
+    expect(component.eligibleResources().map((resource) => resource.id)).toEqual([12]);
+  });
+
+  it('replaces the complete assignment with the selected resource ids', () => {
+    const service = { id: 9, name: 'Corte clásico', description: null, durationMinutes: 45, price: 35, currency: 'PEN' as const, active: true, bookingMode: 'EXCLUSIVE_RESOURCE' as const, customerCancellationAllowed: true, cancellationNoticeMinutes: 120, customerRescheduleAllowed: true, rescheduleNoticeMinutes: 120, maxReschedules: 2, businessId: 7, locationIds: [3], createdAt: '', updatedAt: '' };
+    component.assignmentService.set(service);
+    component.assignedResourceIds.set(new Set([12, 5]));
+    replaceServiceResources.mockReturnValue(of({ serviceId: 9, resourceIds: [5, 12] }));
+
+    component.saveAssignment();
+
+    expect(replaceServiceResources).toHaveBeenCalledWith(7, 9, [5, 12]);
+    expect(component.assignmentService()).toBeNull();
   });
 });

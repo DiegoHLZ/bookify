@@ -24,7 +24,7 @@ aside nav small { margin-left: auto; color: #8fb1a3; font-size: 8px; text-transf
 .content-heading p { margin: 0; color: var(--muted); font-size: 13px; }
 .content-heading button, .empty button { padding: 13px 17px; display: inline-flex; align-items: center; gap: 24px; border: 0; border-radius: 10px; background: var(--ink); color: white; font-size: 11px; font-weight: 800; cursor: pointer; }
 .service-grid { margin-top: 38px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
-.service-card { min-height: 220px; padding: 23px; border: 1px solid #dfe4de; border-radius: 18px; background: #fdfdfc; }
+.service-card { min-height: 220px; padding: 23px; display: flex; flex-direction: column; border: 1px solid #dfe4de; border-radius: 18px; background: #fdfdfc; }
 .service-top { display: flex; align-items: center; justify-content: space-between; }
 .service-top span { padding: 5px 8px; border-radius: 99px; background: #e8f3ed; color: var(--forest); font-size: 8px; font-weight: 800; text-transform: uppercase; }
 .service-top span.inactive { background: #f3ece9; color: #946050; }
@@ -59,12 +59,12 @@ aside nav small { margin-left: auto; color: #8fb1a3; font-size: 8px; text-transf
 .modal-heading h2 { margin: 7px 0 25px; font: 500 35px var(--font-serif); }
 .modal-heading > button { border: 0; background: transparent; color: var(--muted); font-size: 27px; cursor: pointer; }
 .modal form { display: grid; gap: 15px; }
-.modal label > span { margin-bottom: 7px; display: block; color: #35403c; font-size: 10px; font-weight: 800; }
-.modal label > span small { color: #9aa39f; font-size: 8px; }
-.modal input, .modal textarea, .modal select { width: 100%; min-height: 48px; padding: 0 13px; border: 1px solid #dce1dd; border-radius: 10px; outline: 0; background: #fdfdfc; color: var(--ink); }
-.modal textarea { min-height: 82px; padding-top: 13px; resize: vertical; }
-.modal input:focus, .modal textarea:focus, .modal select:focus { border-color: #83a496; box-shadow: 0 0 0 4px rgba(40,92,75,.08); }
-.modal label > small { display: block; margin-top: 5px; color: #b34f3e; font-size: 9px; }
+.modal form label > span { margin-bottom: 7px; display: block; color: #35403c; font-size: 10px; font-weight: 800; }
+.modal form label > span small { color: #9aa39f; font-size: 8px; }
+.modal form input, .modal form textarea, .modal form select { width: 100%; min-height: 48px; padding: 0 13px; border: 1px solid #dce1dd; border-radius: 10px; outline: 0; background: #fdfdfc; color: var(--ink); }
+.modal form textarea { min-height: 82px; padding-top: 13px; resize: vertical; }
+.modal form input:focus, .modal form textarea:focus, .modal form select:focus { border-color: #83a496; box-shadow: 0 0 0 4px rgba(40,92,75,.08); }
+.modal form label > small { display: block; margin-top: 5px; color: #b34f3e; font-size: 9px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
 .policy-note { margin: 2px 0; padding: 12px; border-radius: 9px; background: #f2f6f3; color: var(--muted); font-size: 10px; line-height: 1.5; }
 .notice { padding: 11px 13px; border: 1px solid #f5d2c9; border-radius: 9px; background: #fff0ec; color: #913d31; font-size: 11px; }

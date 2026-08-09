@@ -43,6 +43,9 @@
                   <h3>{{ service.name }}</h3>
                   <p>{{ service.description || 'Sin descripción' }}</p>
                   <dl><div><dt>Duración</dt><dd>{{ service.durationMinutes }} min</dd></div><div><dt>Modalidad</dt><dd>{{ bookingModeName(service.bookingMode) }}</dd></div></dl>
+                  @if (canManage()) {
+                    <button type="button" class="assignment-button" (click)="openAssignment(service)">Asignar recursos <span>→</span></button>
+                  }
                 </article>
               }
             </div>
@@ -84,6 +87,9 @@
       <section class="modal" role="dialog" aria-modal="true" aria-labelledby="service-form-title" (click)="$event.stopPropagation()">
         <div class="modal-heading"><div><span class="eyebrow">Nuevo servicio</span><h2 id="service-form-title">Configura la reserva</h2></div><button type="button" aria-label="Cerrar formulario" (click)="closeForm()">×</button></div>
         @if (formError()) {<div class="notice" role="alert">{{ formError() }}</div>}
+        @if (!assignmentLoading() && unavailableAssignmentIds().length > 0) {
+          <div class="assignment-warning" role="note"><b>{{ unavailableAssignmentIds().length }}</b> asignación anterior ya no está disponible y se retirará al guardar.</div>
+        }
         <form [formGroup]="serviceForm" (ngSubmit)="submit()">
           <label><span>Nombre</span><input formControlName="name" placeholder="Ej. Corte clásico">@if (serviceForm.controls.name.touched && serviceForm.controls.name.invalid) {<small>Ingresa un nombre válido.</small>}</label>
           <label><span>Descripción <small>Opcional</small></span><textarea formControlName="description" placeholder="Describe brevemente el servicio"></textarea></label>
@@ -110,6 +116,34 @@
           <p class="policy-note">La capacidad representa cuántas reservas simultáneas admite este recurso. Para un profesional normalmente es 1.</p>
           <div class="modal-actions"><button type="button" class="secondary" (click)="closeResourceForm()">Cancelar</button><button type="submit" [disabled]="saving()">{{ saving() ? 'Creando…' : 'Crear recurso' }} <b>→</b></button></div>
         </form>
+      </section>
+    </div>
+  }
+
+  @if (assignmentService(); as selectedService) {
+    <div class="modal-backdrop" role="presentation" (click)="closeAssignment()">
+      <section class="modal assignment-modal" role="dialog" aria-modal="true" aria-labelledby="assignment-title" (click)="$event.stopPropagation()">
+        <div class="modal-heading"><div><span class="eyebrow">Recursos del servicio</span><h2 id="assignment-title">{{ selectedService.name }}</h2></div><button type="button" aria-label="Cerrar asignación de recursos" (click)="closeAssignment()">×</button></div>
+        @if (formError()) {<div class="notice" role="alert">{{ formError() }}</div>}
+        @if (assignmentLoading()) {
+          <div class="assignment-state" role="status"><span class="spinner"></span><p>Cargando asignaciones actuales…</p></div>
+        } @else if (eligibleResources().length === 0) {
+          <div class="assignment-empty"><span>◇</span><h3>No hay recursos compatibles</h3><p>Crea o activa un recurso en una sede donde se ofrezca este servicio.</p></div>
+        } @else {
+          <p class="assignment-help">Selecciona todos los recursos que pueden atender este servicio. Al guardar se reemplazará la asignación actual.</p>
+          <div class="assignment-list" role="group" aria-label="Recursos disponibles">
+            @for (resource of eligibleResources(); track resource.id) {
+              <label class="assignment-option" [class.selected]="assignedResourceIds().has(resource.id)">
+                <input type="checkbox" [checked]="assignedResourceIds().has(resource.id)" (change)="toggleAssignment(resource.id)">
+                <span class="resource-icon">{{ resource.name.charAt(0).toUpperCase() }}</span>
+                <span class="assignment-resource"><b>{{ resource.name }}</b><small>{{ resourceTypeName(resource.type) }} · {{ locationName(resource.locationId) }}</small></span>
+                <span class="checkmark">✓</span>
+              </label>
+            }
+          </div>
+        }
+        <div class="assignment-summary"><span>Recursos activos seleccionados</span><strong>{{ assignedResourceIds().size }}</strong></div>
+        <div class="modal-actions"><button type="button" class="secondary" (click)="closeAssignment()">Cancelar</button><button type="button" [disabled]="assignmentLoading() || assignmentSaving()" (click)="saveAssignment()">{{ assignmentSaving() ? 'Guardando…' : 'Guardar asignación' }} <b>→</b></button></div>
       </section>
     </div>
   }

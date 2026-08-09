@@ -8,6 +8,7 @@ import {
   CreateBusinessRequest,
   CreateServiceOfferingRequest,
   MyBusiness,
+  ServiceResourceAssignment,
   ServiceOffering,
   UpsertBookableResourceRequest,
 } from './business.models';
@@ -46,5 +47,13 @@ export class BusinessService {
 
   changeResourceStatus(businessId: number, locationId: number, resourceId: number, active: boolean): Observable<BookableResource> {
     return this.http.patch<BookableResource>(`/api/v1/businesses/${businessId}/locations/${locationId}/resources/${resourceId}/status`, { active });
+  }
+
+  getServiceResources(businessId: number, serviceId: number): Observable<ServiceResourceAssignment> {
+    return this.http.get<ServiceResourceAssignment>(`/api/v1/businesses/${businessId}/services/${serviceId}/resources`);
+  }
+
+  replaceServiceResources(businessId: number, serviceId: number, resourceIds: number[]): Observable<ServiceResourceAssignment> {
+    return this.http.put<ServiceResourceAssignment>(`/api/v1/businesses/${businessId}/services/${serviceId}/resources`, { resourceIds });
   }
 }

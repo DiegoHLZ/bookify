@@ -90,4 +90,18 @@ describe('BusinessService', () => {
     expect(request.request.body).toEqual({ active: false });
     request.flush({});
   });
+
+  it('loads and atomically replaces service resource assignments', () => {
+    service.getServiceResources(7, 9).subscribe();
+    service.replaceServiceResources(7, 9, [5, 8]).subscribe();
+
+    const requests = http.match('/api/v1/businesses/7/services/9/resources');
+    const getRequest = requests.find((request) => request.request.method === 'GET');
+    const putRequest = requests.find((request) => request.request.method === 'PUT');
+    expect(requests).toHaveLength(2);
+    expect(getRequest).toBeDefined();
+    expect(putRequest?.request.body).toEqual({ resourceIds: [5, 8] });
+    getRequest?.flush({ serviceId: 9, resourceIds: [5] });
+    putRequest?.flush({ serviceId: 9, resourceIds: [5, 8] });
+  });
 });
