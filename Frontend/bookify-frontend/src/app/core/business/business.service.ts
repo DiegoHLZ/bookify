@@ -8,6 +8,10 @@ import {
   CreateBusinessRequest,
   CreateServiceOfferingRequest,
   MyBusiness,
+  ResourceSchedule,
+  ScheduleException,
+  ScheduleExceptionRequest,
+  ScheduleRuleRequest,
   ServiceResourceAssignment,
   ServiceOffering,
   UpsertBookableResourceRequest,
@@ -55,5 +59,25 @@ export class BusinessService {
 
   replaceServiceResources(businessId: number, serviceId: number, resourceIds: number[]): Observable<ServiceResourceAssignment> {
     return this.http.put<ServiceResourceAssignment>(`/api/v1/businesses/${businessId}/services/${serviceId}/resources`, { resourceIds });
+  }
+
+  getResourceSchedule(businessId: number, locationId: number, resourceId: number): Observable<ResourceSchedule> {
+    return this.http.get<ResourceSchedule>(`/api/v1/businesses/${businessId}/locations/${locationId}/resources/${resourceId}/schedule`);
+  }
+
+  replaceResourceSchedule(businessId: number, locationId: number, resourceId: number, rules: ScheduleRuleRequest[]): Observable<ResourceSchedule> {
+    return this.http.put<ResourceSchedule>(`/api/v1/businesses/${businessId}/locations/${locationId}/resources/${resourceId}/schedule`, { rules });
+  }
+
+  listScheduleExceptions(businessId: number, locationId: number, resourceId: number, from: string, to: string): Observable<ScheduleException[]> {
+    return this.http.get<ScheduleException[]>(`/api/v1/businesses/${businessId}/locations/${locationId}/resources/${resourceId}/exceptions`, { params: { from, to } });
+  }
+
+  upsertScheduleException(businessId: number, locationId: number, resourceId: number, date: string, request: ScheduleExceptionRequest): Observable<ScheduleException> {
+    return this.http.put<ScheduleException>(`/api/v1/businesses/${businessId}/locations/${locationId}/resources/${resourceId}/exceptions/${date}`, request);
+  }
+
+  deleteScheduleException(businessId: number, locationId: number, resourceId: number, date: string): Observable<void> {
+    return this.http.delete<void>(`/api/v1/businesses/${businessId}/locations/${locationId}/resources/${resourceId}/exceptions/${date}`);
   }
 }

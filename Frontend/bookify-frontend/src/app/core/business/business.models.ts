@@ -42,6 +42,9 @@ export interface MyBusiness {
 export type BookingMode = 'EXCLUSIVE_RESOURCE' | 'CAPACITY_SESSION';
 export type SupportedCurrency = 'PEN' | 'USD' | 'EUR';
 export type ResourceType = 'PROFESSIONAL' | 'COURT' | 'ROOM' | 'DESK' | 'EQUIPMENT';
+export type WeekDay = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
+export type ScheduleRuleType = 'AVAILABLE' | 'BREAK';
+export type ScheduleExceptionType = 'CLOSED' | 'CUSTOM_HOURS';
 
 export interface BusinessLocation {
   id: number;
@@ -120,6 +123,56 @@ export interface ServiceResourceAssignment {
   serviceId: number;
   resourceIds: number[];
 }
+
+export interface ScheduleRuleRequest {
+  dayOfWeek: WeekDay;
+  ruleType: ScheduleRuleType;
+  startTime: string;
+  endTime: string;
+}
+
+export interface ScheduleRule extends ScheduleRuleRequest {
+  id: number;
+}
+
+export interface ResourceSchedule {
+  businessId: number;
+  locationId: number;
+  resourceId: number;
+  timezone: string;
+  rules: ScheduleRule[];
+}
+
+export interface ScheduleExceptionRequest {
+  exceptionType: ScheduleExceptionType;
+  startTime: string | null;
+  endTime: string | null;
+  reason: string | null;
+}
+
+export interface ScheduleException extends ScheduleExceptionRequest {
+  id: number;
+  resourceId: number;
+  exceptionDate: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WeekDayOption {
+  code: WeekDay;
+  shortName: string;
+  name: string;
+}
+
+export const WEEK_DAYS: readonly WeekDayOption[] = [
+  { code: 'MONDAY', shortName: 'Lun', name: 'Lunes' },
+  { code: 'TUESDAY', shortName: 'Mar', name: 'Martes' },
+  { code: 'WEDNESDAY', shortName: 'Mié', name: 'Miércoles' },
+  { code: 'THURSDAY', shortName: 'Jue', name: 'Jueves' },
+  { code: 'FRIDAY', shortName: 'Vie', name: 'Viernes' },
+  { code: 'SATURDAY', shortName: 'Sáb', name: 'Sábado' },
+  { code: 'SUNDAY', shortName: 'Dom', name: 'Domingo' },
+];
 
 export interface ResourceTypeOption {
   code: ResourceType;

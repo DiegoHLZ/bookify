@@ -104,4 +104,34 @@ describe('BusinessService', () => {
     getRequest?.flush({ serviceId: 9, resourceIds: [5] });
     putRequest?.flush({ serviceId: 9, resourceIds: [5, 8] });
   });
+
+  it('loads and atomically replaces a resource schedule', () => {
+    const rules = [{ dayOfWeek: 'MONDAY' as const, ruleType: 'AVAILABLE' as const, startTime: '09:00', endTime: '18:00' }];
+    service.getResourceSchedule(7, 3, 5).subscribe();
+    service.replaceResourceSchedule(7, 3, 5, rules).subscribe();
+
+    const requests = http.match('/api/v1/businesses/7/locations/3/resources/5/schedule');
+    expect(requests.find((request) => request.request.method === 'GET')).toBeDefined();
+    expect(requests.find((request) => request.request.method === 'PUT')?.request.body).toEqual({ rules });
+    requests.forEach((request) => request.flush({ businessId: 7, locationId: 3, resourceId: 5, timezone: 'America/Lima', rules: [] }));
+  });
+
+  it('manages dated schedule exceptions with an explicit range', () => {
+    const payload = { exceptionType: 'CLOSED' as const, startTime: null, endTime: null, reason: 'Feriado' };
+    service.listScheduleExceptions(7, 3, 5, '2026-08-09', '2027-08-09').subscribe();
+    service.upsertScheduleException(7, 3, 5, '2026-12-25', payload).subscribe();
+    service.deleteScheduleException(7, 3, 5, '2026-12-25').subscribe();
+
+    const list = http.expectOne((request) => request.url === '/api/v1/businesses/7/locations/3/resources/5/exceptions' && request.params.get('from') === '2026-08-09' && request.params.get('to') === '2027-08-09');
+    const dateRequests = http.match('/api/v1/businesses/7/locations/3/resources/5/exceptions/2026-12-25');
+    const upsert = dateRequests.find((request) => request.request.method === 'PUT')!;
+    const remove = dateRequests.find((request) => request.request.method === 'DELETE')!;
+    expect(list.request.method).toBe('GET');
+    expect(upsert.request.method).toBe('PUT');
+    expect(upsert.request.body).toEqual(payload);
+    expect(remove.request.method).toBe('DELETE');
+    list.flush([]);
+    upsert.flush({ id: 1, resourceId: 5, exceptionDate: '2026-12-25', ...payload, createdAt: '', updatedAt: '' });
+    remove.flush(null);
+  });
 });

@@ -15,12 +15,13 @@ import {
   SupportedCurrency,
 } from '../../../core/business/business.models';
 import { BusinessService } from '../../../core/business/business.service';
+import { ScheduleEditor } from './schedule-editor/schedule-editor';
 
 @Component({
   selector: 'app-business-management',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, ScheduleEditor],
   templateUrl: './business-management.html',
-  styleUrls: ['./business-management.css', './business-management-assignment.css'],
+  styleUrls: ['./business-management.css', './business-management-resource.css', './business-management-assignment.css'],
 })
 export class BusinessManagement {
   private readonly businessService = inject(BusinessService);
@@ -42,6 +43,7 @@ export class BusinessManagement {
   readonly assignmentService = signal<ServiceOffering | null>(null);
   readonly assignedResourceIds = signal<Set<number>>(new Set());
   readonly unavailableAssignmentIds = signal<number[]>([]);
+  readonly scheduleResource = signal<BookableResource | null>(null);
   readonly assignmentLoading = signal(false);
   readonly assignmentSaving = signal(false);
   readonly canManage = computed(() => ['OWNER', 'ADMIN'].includes(this.business()?.membershipRole ?? ''));
@@ -230,6 +232,15 @@ export class BusinessManagement {
       ),
       error: (error: HttpErrorResponse) => this.formError.set(this.readError(error, 'No pudimos cambiar el estado del recurso.')),
     });
+  }
+
+  openSchedule(resource: BookableResource): void {
+    this.formError.set(null);
+    this.scheduleResource.set(resource);
+  }
+
+  closeSchedule(): void {
+    this.scheduleResource.set(null);
   }
 
   openAssignment(service: ServiceOffering): void {

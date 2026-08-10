@@ -17,7 +17,7 @@
         <nav aria-label="Gestión del negocio">
           <button type="button" [class.active]="section() === 'services'" (click)="showSection('services')"><span>01</span> Servicios</button>
           <button type="button" [class.active]="section() === 'resources'" (click)="showSection('resources')"><span>02</span> Recursos</button>
-          <span class="future"><b>03</b> Horarios <small>Próximamente</small></span>
+          <span class="future"><b>03</b> Horarios <small>Por recurso</small></span>
         </nav>
         <div class="location-summary"><span>Sedes activas</span><strong>{{ activeLocations().length }}</strong></div>
       </aside>
@@ -68,11 +68,11 @@
                 <article class="resource-card">
                   <div class="resource-icon">{{ resource.name.charAt(0).toUpperCase() }}</div>
                   <div class="resource-info"><span>{{ resourceTypeName(resource.type) }} · {{ locationName(resource.locationId) }}</span><h3>{{ resource.name }}</h3><p>{{ resource.description || 'Sin descripción' }}</p><small>Capacidad: {{ resource.capacity }}</small></div>
-                  @if (canManage()) {
+                  <div class="resource-actions"><button type="button" class="schedule-button" (click)="openSchedule(resource)">Horarios</button>@if (canManage()) {
                     <button type="button" class="status-toggle" [class.inactive]="!resource.active" [disabled]="resourceActionId() !== null" (click)="toggleResource(resource)">{{ resourceActionId() === resource.id ? 'Guardando…' : (resource.active ? 'Activo' : 'Inactivo') }}</button>
                   } @else {
                     <span class="read-status" [class.inactive]="!resource.active">{{ resource.active ? 'Activo' : 'Inactivo' }}</span>
-                  }
+                  }</div>
                 </article>
               }
             </div>
@@ -146,5 +146,10 @@
         <div class="modal-actions"><button type="button" class="secondary" (click)="closeAssignment()">Cancelar</button><button type="button" [disabled]="assignmentLoading() || assignmentSaving()" (click)="saveAssignment()">{{ assignmentSaving() ? 'Guardando…' : 'Guardar asignación' }} <b>→</b></button></div>
       </section>
     </div>
+  }
+
+
+  @if (scheduleResource(); as selectedResource) {
+    <app-schedule-editor [businessId]="businessId" [resource]="selectedResource" [canManage]="canManage()" (closed)="closeSchedule()" />
   }
 </main>
