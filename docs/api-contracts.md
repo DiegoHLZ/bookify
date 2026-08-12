@@ -41,6 +41,8 @@ each location timezone; results include the service IDs that can start exactly t
 
 Pages use the deterministic ordering distance, rating average, rating count and location ID.
 `size` is 1–100 and `page` is 0–100. `hasNext` indicates whether another page exists.
+Each item includes `businessSlug`, which is the stable public route identifier used to open
+the business detail without exposing an authenticated management URL.
 
 `GET /api/v1/discovery/businesses/{slug}` returns the public business profile, verified
 active locations and active services assigned to them. Inactive or unverified catalog data

@@ -1,0 +1,52 @@
+<div class="marketplace-shell">
+  <header class="marketplace-header">
+    <a class="marketplace-brand" routerLink="/" aria-label="Bookify, inicio"><span>b</span>bookify</a>
+    <nav aria-label="Cuenta"><a routerLink="/iniciar-sesion">Iniciar sesión</a><a class="account-button" routerLink="/crear-cuenta">Crear cuenta</a></nav>
+  </header>
+
+  <main>
+    <section class="search-intro">
+      <span class="kicker">Explora Bookify</span>
+      <h1>Encuentra tu próximo <em>momento.</em></h1>
+      <p>Resultados verificables, ordenados por cercanía y valoración.</p>
+    </section>
+
+    <form class="filters" [formGroup]="form" (ngSubmit)="submit()">
+      <label class="wide"><span>¿Qué necesitas?</span><input formControlName="text" type="search" placeholder="Masaje, cancha, sala..." /></label>
+      <label><span>Categoría</span><select formControlName="categoryCode">@for (category of categories; track category.code) {<option [value]="category.code">{{ category.name }}</option>}</select></label>
+      <label><span>Fecha y hora</span><input formControlName="availableAt" type="datetime-local" /></label>
+      <label><span>Distancia</span><select formControlName="radiusKm"><option [ngValue]="5">5 km</option><option [ngValue]="15">15 km</option><option [ngValue]="30">30 km</option><option [ngValue]="50">50 km</option></select></label>
+      <label><span>Valoración</span><select formControlName="minRating"><option [ngValue]="0">Cualquiera</option><option [ngValue]="3">3+ estrellas</option><option [ngValue]="4">4+ estrellas</option><option [ngValue]="4.5">4.5+ estrellas</option></select></label>
+      <button class="search-submit" type="submit" [disabled]="loading()">{{ loading() ? 'Buscando…' : 'Buscar lugares' }}</button>
+    </form>
+
+    <section class="location-row" aria-live="polite">
+      <span><b>⌖</b> Buscando desde {{ locationLabel() }}</span>
+      <button type="button" (click)="useCurrentLocation()" [disabled]="locating()">{{ locating() ? 'Obteniendo ubicación…' : 'Usar mi ubicación' }}</button>
+    </section>
+
+    @if (error()) {<div class="feedback error" role="alert">{{ error() }}</div>}
+
+    <section class="results" aria-busy="loading()">
+      <div class="results-heading"><div><span class="kicker">Resultados</span><h2>{{ resultSummary() }}</h2></div>@if (form.controls.availableAt.value) {<span class="availability-badge">✓ Disponibles en el horario elegido</span>}</div>
+      @if (!loading() && searched() && items().length === 0) {
+        <div class="empty"><span>◇</span><h3>No encontramos coincidencias</h3><p>Amplía la distancia, elimina la hora exacta o prueba con otras palabras.</p></div>
+      } @else {
+        <div class="result-grid">
+          @for (item of items(); track item.locationId) {
+            <article class="result-card">
+              <div class="card-visual"><span>{{ item.businessName.charAt(0) }}</span><small>{{ categoryName(item.categoryCode) }}</small></div>
+              <div class="card-body">
+                <div class="rating"><strong>★ {{ item.ratingAverage.toFixed(1) }}</strong><span>{{ item.ratingCount }} reseñas</span></div>
+                <h3>{{ item.businessName }}</h3><p>{{ item.locationName }} · {{ item.city }}</p>
+                <div class="card-meta"><span>⌖ {{ distance(item.distanceMeters) }}</span>@if (item.requestedAt) {<span>✓ Horario disponible</span>}</div>
+                <a [routerLink]="['/lugares', item.businessSlug]" [queryParams]="{ location: item.locationId, at: item.requestedAt }">Ver servicios <b>→</b></a>
+              </div>
+            </article>
+          }
+        </div>
+      }
+      @if (page() > 0 || hasNext()) {<nav class="pagination" aria-label="Páginas de resultados"><button type="button" (click)="previous()" [disabled]="page() === 0 || loading()">← Anterior</button><span>Página {{ page() + 1 }}</span><button type="button" (click)="next()" [disabled]="!hasNext() || loading()">Siguiente →</button></nav>}
+    </section>
+  </main>
+</div>

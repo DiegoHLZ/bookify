@@ -194,7 +194,7 @@ public class NearbyDiscoveryService {
             List<Long> availableServices
     ) {
         return new DiscoverySearchItemResponse(
-                row.getBusinessId(), row.getBusinessName(), row.getCategoryCode(),
+                row.getBusinessId(), row.getBusinessSlug(), row.getBusinessName(), row.getCategoryCode(),
                 row.getRatingAverage(), row.getRatingCount(), row.getLocationId(),
                 row.getLocationName(), row.getAddress(), row.getCity(), row.getCountryCode(),
                 row.getTimezone(), row.getLatitude(), row.getLongitude(),

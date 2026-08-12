@@ -35,6 +35,7 @@ public interface BusinessLocationRepository extends JpaRepository<BusinessLocati
     @Query(value = """
             SELECT
                 b.id AS "businessId",
+                b.slug AS "businessSlug",
                 b.name AS "businessName",
                 b.category_code AS "categoryCode",
                 b.rating_average AS "ratingAverage",

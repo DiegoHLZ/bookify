@@ -171,7 +171,7 @@ class SemanticSearchServiceTest {
 
     private DiscoverySearchItemResponse item(Long locationId, String name, double distance) {
         return new DiscoverySearchItemResponse(
-                locationId, name, "PROFESSIONAL_SERVICES", BigDecimal.valueOf(4.5),
+                locationId, "business-" + locationId, name, "PROFESSIONAL_SERVICES", BigDecimal.valueOf(4.5),
                 10, locationId, "Principal", "Dirección", "Lima", "PE",
                 "America/Lima", BigDecimal.valueOf(-12.1), BigDecimal.valueOf(-77),
                 distance, null, List.of()

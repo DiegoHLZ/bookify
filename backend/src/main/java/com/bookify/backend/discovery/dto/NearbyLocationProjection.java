@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 public interface NearbyLocationProjection {
     Long getBusinessId();
+    String getBusinessSlug();
     String getBusinessName();
     String getCategoryCode();
     BigDecimal getRatingAverage();
