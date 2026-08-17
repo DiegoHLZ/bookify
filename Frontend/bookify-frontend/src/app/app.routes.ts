@@ -18,6 +18,12 @@ export const routes: Routes = [
     title: 'Servicios disponibles | Bookify',
   },
   {
+    path: 'reservar',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/booking/create/booking-create').then((module) => module.BookingCreate),
+    title: 'Confirma tu reserva | Bookify',
+  },
+  {
     path: 'iniciar-sesion',
     loadComponent: () => import('./features/auth/login/login').then((module) => module.Login),
     title: 'Iniciar sesión | Bookify',

@@ -15,7 +15,7 @@
           @if (item.locations.length > 1) {<div class="location-tabs" role="tablist" aria-label="Sedes">@for (location of item.locations; track location.id) {<button type="button" role="tab" [attr.aria-selected]="selectedLocationId() === location.id" [class.active]="selectedLocationId() === location.id" (click)="chooseLocation(location.id)">{{ location.name }}</button>}</div>}
           <div class="service-list">
             @for (service of services(); track service.id) {
-              <article><div><h3>{{ service.name }}</h3><p>{{ service.description || 'Servicio disponible para reservar.' }}</p><span>{{ service.durationMinutes }} minutos · {{ service.bookingMode === 'CAPACITY_SESSION' ? 'Cupo compartido' : 'Reserva exclusiva' }}</span></div><div class="service-action"><strong>{{ price(service.price, service.currency) }}</strong><a routerLink="/iniciar-sesion" [queryParams]="{ returnUrl: '/lugares/' + item.slug }">Elegir horario <b>→</b></a></div></article>
+              <article><div><h3>{{ service.name }}</h3><p>{{ service.description || 'Servicio disponible para reservar.' }}</p><span>{{ service.durationMinutes }} minutos · {{ service.bookingMode === 'CAPACITY_SESSION' ? 'Cupo compartido' : 'Reserva exclusiva' }}</span></div><div class="service-action"><strong>{{ price(service.price, service.currency) }}</strong><a routerLink="/reservar" [queryParams]="{ businessId: item.id, locationId: selectedLocationId(), serviceId: service.id, slug: item.slug, at: requestedAt() }">Elegir horario <b>→</b></a></div></article>
             } @empty {<div class="empty">No hay servicios disponibles en esta sede.</div>}
           </div>
         </div>
