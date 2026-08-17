@@ -55,6 +55,7 @@ class NearbyDiscoveryServiceTest {
         );
 
         assertEquals(1, result.items().size());
+        assertEquals("business-1", result.items().get(0).businessSlug());
         assertTrue(result.hasNext());
         verify(locationRepository).searchVerifiedNearby(
                 -12.1, -77.0, 5000, "PROFESSIONAL_SERVICES",
@@ -142,6 +143,7 @@ class NearbyDiscoveryServiceTest {
     private NearbyLocationProjection row(Long businessId, Long locationId, double distance) {
         NearbyLocationProjection row = mock(NearbyLocationProjection.class);
         when(row.getBusinessId()).thenReturn(businessId);
+        when(row.getBusinessSlug()).thenReturn("business-" + businessId);
         when(row.getBusinessName()).thenReturn("Centro " + businessId);
         when(row.getCategoryCode()).thenReturn("PROFESSIONAL_SERVICES");
         when(row.getRatingAverage()).thenReturn(new BigDecimal("4.75"));

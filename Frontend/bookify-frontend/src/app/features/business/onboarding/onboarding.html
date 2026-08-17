@@ -1,0 +1,75 @@
+<main class="onboarding-page">
+  <header>
+    <a class="brand" routerLink="/"><span>b</span>bookify</a>
+    @if (step() < 4) {
+      <a class="exit-link" routerLink="/panel">Guardar y salir</a>
+    }
+  </header>
+
+  <div class="onboarding-layout">
+    <aside>
+      <span class="aside-kicker">Bookify para negocios</span>
+      <h1>Construyamos tu<br /><em>espacio digital.</em></h1>
+      <p>Configura lo esencial ahora. Podrás añadir servicios, recursos y horarios desde tu panel.</p>
+      <ol aria-label="Progreso del onboarding">
+        <li [class.active]="step() === 1" [class.done]="step() > 1"><span>{{ step() > 1 ? '✓' : '1' }}</span><div><strong>Tu negocio</strong><small>Identidad y categoría</small></div></li>
+        <li [class.active]="step() === 2" [class.done]="step() > 2"><span>{{ step() > 2 ? '✓' : '2' }}</span><div><strong>Primera ubicación</strong><small>Dirección y zona horaria</small></div></li>
+        <li [class.active]="step() === 3" [class.done]="step() > 3"><span>{{ step() > 3 ? '✓' : '3' }}</span><div><strong>Confirmación</strong><small>Revisa antes de crear</small></div></li>
+      </ol>
+    </aside>
+
+    <section class="form-stage">
+      @if (errorMessage()) {
+        <div class="onboarding-error" role="alert">{{ errorMessage() }}</div>
+      }
+
+      @if (step() === 1) {
+        <div class="stage-heading"><span>Paso 1 de 3</span><h2>Cuéntanos sobre tu negocio</h2><p>Esta información será la base de tu perfil público.</p></div>
+        <form [formGroup]="businessForm" (ngSubmit)="next()" novalidate>
+          <label class="field"><span>Nombre del negocio</span><input formControlName="name" (input)="updateSlug()" placeholder="Ej. Studio Norte" autocomplete="organization" />
+            @if (businessForm.controls.name.touched && businessForm.controls.name.invalid) { <small>Ingresa el nombre del negocio.</small> }
+          </label>
+          <label class="field"><span>Identificador público</span><div class="slug-control"><b>bookify.pe/</b><input formControlName="slug" placeholder="studio-norte" /></div>
+            @if (businessForm.controls.slug.touched && businessForm.controls.slug.invalid) { <small>Usa letras minúsculas, números y guiones.</small> }
+          </label>
+          <fieldset><legend>¿Qué tipo de negocio es?</legend><div class="category-options">
+            @for (category of categories; track category.code) {
+              <button type="button" [class.selected]="businessForm.controls.categoryCode.value === category.code" (click)="chooseCategory(category)"><span>{{ category.name }}</span><small>{{ category.description }}</small><b>{{ businessForm.controls.categoryCode.value === category.code ? '✓' : '→' }}</b></button>
+            }
+          </div></fieldset>
+          @if (businessForm.controls.categoryCode.touched && businessForm.controls.categoryCode.invalid) { <small class="standalone-error">Selecciona una categoría.</small> }
+          <label class="field"><span>Descripción <i>Opcional</i></span><textarea formControlName="description" rows="3" placeholder="Describe brevemente lo que hace especial a tu negocio"></textarea></label>
+          <div class="field-row"><label class="field"><span>Teléfono <i>Opcional</i></span><input formControlName="phone" autocomplete="tel" placeholder="+51 999 999 999" /></label><label class="field"><span>Correo comercial <i>Opcional</i></span><input formControlName="email" type="email" autocomplete="email" placeholder="contacto@negocio.com" /></label></div>
+          <div class="stage-actions"><span></span><button class="primary" type="submit">Continuar <b>→</b></button></div>
+        </form>
+      }
+
+      @if (step() === 2) {
+        <div class="stage-heading"><span>Paso 2 de 3</span><h2>¿Dónde te encontrarán?</h2><p>Creamos tu primera sede con una zona horaria y coordenadas precisas.</p></div>
+        <form [formGroup]="locationForm" (ngSubmit)="next()" novalidate>
+          <div class="field-row"><label class="field"><span>Nombre de la sede</span><input formControlName="name" placeholder="Sede principal" /></label><label class="field"><span>Ciudad</span><input formControlName="city" autocomplete="address-level2" /></label></div>
+          <label class="field"><span>Dirección</span><input formControlName="address" autocomplete="street-address" placeholder="Av. Principal 123" />
+            @if (locationForm.controls.address.touched && locationForm.controls.address.invalid) { <small>Ingresa la dirección de la sede.</small> }
+          </label>
+          <div class="field-row"><label class="field"><span>País</span><input formControlName="countryCode" maxlength="2" /></label><label class="field"><span>Zona horaria</span><input formControlName="timezone" /></label></div>
+          <div class="coordinates-heading"><div><strong>Coordenadas</strong><p>Necesarias para mostrar tu negocio en búsquedas cercanas.</p></div><button type="button" (click)="locate()" [disabled]="locating()">{{ locating() ? 'Ubicando…' : 'Usar mi ubicación' }}</button></div>
+          <div class="field-row"><label class="field"><span>Latitud</span><input formControlName="latitude" type="number" step="0.000001" placeholder="-12.046374" /></label><label class="field"><span>Longitud</span><input formControlName="longitude" type="number" step="0.000001" placeholder="-77.042793" /></label></div>
+          @if ((locationForm.controls.latitude.touched && locationForm.controls.latitude.invalid) || (locationForm.controls.longitude.touched && locationForm.controls.longitude.invalid)) { <small class="standalone-error">Ingresa coordenadas válidas.</small> }
+          <div class="stage-actions"><button class="secondary" type="button" (click)="previous()">← Atrás</button><button class="primary" type="submit">Revisar <b>→</b></button></div>
+        </form>
+      }
+
+      @if (step() === 3) {
+        <div class="stage-heading"><span>Paso 3 de 3</span><h2>Todo listo para comenzar</h2><p>Confirma los datos. La creación será transaccional y segura.</p></div>
+        <div class="review-card"><div class="review-icon">{{ businessForm.controls.name.value.charAt(0).toUpperCase() }}</div><div><span>Negocio</span><h3>{{ businessForm.controls.name.value }}</h3><p>{{ selectedCategory()?.name }} · bookify.pe/{{ businessForm.controls.slug.value }}</p></div></div>
+        <dl><div><dt>Primera sede</dt><dd>{{ locationForm.controls.name.value }}</dd></div><div><dt>Dirección</dt><dd>{{ locationForm.controls.address.value }}, {{ locationForm.controls.city.value }}</dd></div><div><dt>Zona horaria</dt><dd>{{ locationForm.controls.timezone.value }}</dd></div><div><dt>Tu rol</dt><dd>Propietario</dd></div></dl>
+        <div class="transaction-note"><b>✓</b><p><strong>Creación segura</strong>El negocio, la ubicación y tu membresía se crearán juntos. Si algo falla, no quedarán datos incompletos.</p></div>
+        <div class="stage-actions"><button class="secondary" type="button" (click)="previous()">← Atrás</button><button class="primary" type="button" (click)="submit()" [disabled]="loading()">{{ loading() ? 'Creando…' : 'Crear negocio' }} <b>→</b></button></div>
+      }
+
+      @if (step() === 4) {
+        <div class="success-state"><div class="success-mark">✓</div><span>Negocio creado</span><h2>Bienvenido, {{ createdBusiness()?.name }}</h2><p>Tu primera sede y membresía de propietario están listas. Ahora puedes añadir servicios, recursos y horarios.</p><button class="primary" type="button" (click)="finish()">Ir a mi panel <b>→</b></button></div>
+      }
+    </section>
+  </div>
+</main>

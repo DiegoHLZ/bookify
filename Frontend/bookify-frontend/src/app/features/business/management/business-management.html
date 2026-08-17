@@ -1,0 +1,155 @@
+<main class="management-page">
+  <header class="management-header">
+    <a class="brand" routerLink="/"><span>b</span>bookify</a>
+    <a class="back-link" routerLink="/panel">← Volver al panel</a>
+  </header>
+
+  @if (loading()) {
+    <section class="state" role="status"><span class="spinner"></span><p>Cargando tu negocio…</p></section>
+  } @else if (loadError()) {
+    <section class="state error-state"><span>!</span><h1>No pudimos abrir este negocio</h1><p>{{ loadError() }}</p><button type="button" (click)="load()">Volver a intentar</button></section>
+  } @else if (business(); as selectedBusiness) {
+    <section class="management-shell">
+      <aside>
+        <span class="eyebrow">Panel del negocio</span>
+        <h1>{{ selectedBusiness.name }}</h1>
+        <p>{{ selectedBusiness.membershipRole === 'OWNER' ? 'Propietario' : selectedBusiness.membershipRole }}</p>
+        <nav aria-label="Gestión del negocio">
+          <button type="button" [class.active]="section() === 'services'" (click)="showSection('services')"><span>01</span> Servicios</button>
+          <button type="button" [class.active]="section() === 'resources'" (click)="showSection('resources')"><span>02</span> Recursos</button>
+          <span class="future"><b>03</b> Horarios <small>Por recurso</small></span>
+        </nav>
+        <div class="location-summary"><span>Sedes activas</span><strong>{{ activeLocations().length }}</strong></div>
+      </aside>
+
+      <div class="content">
+        @if (section() === 'services') {
+          <div class="content-heading">
+            <div><span class="eyebrow">Catálogo</span><h2>Servicios</h2><p>Define lo que tus clientes podrán reservar.</p></div>
+            @if (canManage() && activeLocations().length > 0) {
+              <button type="button" (click)="openForm()">Nuevo servicio <b>＋</b></button>
+            }
+          </div>
+
+          @if (activeLocations().length === 0) {
+            <div class="empty"><span>⌖</span><h3>Necesitas una sede activa</h3><p>Los servicios deben estar asociados al menos a una ubicación activa.</p></div>
+          } @else if (services().length === 0) {
+            <div class="empty"><span>✦</span><h3>Crea tu primer servicio</h3><p>Agrega duración, precio, sede y modalidad de reserva.</p>@if (canManage()) {<button type="button" (click)="openForm()">Crear servicio →</button>}</div>
+          } @else {
+            <div class="service-grid">
+              @for (service of services(); track service.id) {
+                <article class="service-card">
+                  <div class="service-top"><span [class.inactive]="!service.active">{{ service.active ? 'Activo' : 'Inactivo' }}</span><b>{{ formatPrice(service) }}</b></div>
+                  <h3>{{ service.name }}</h3>
+                  <p>{{ service.description || 'Sin descripción' }}</p>
+                  <dl><div><dt>Duración</dt><dd>{{ service.durationMinutes }} min</dd></div><div><dt>Modalidad</dt><dd>{{ bookingModeName(service.bookingMode) }}</dd></div></dl>
+                  @if (canManage()) {
+                    <button type="button" class="assignment-button" (click)="openAssignment(service)">Asignar recursos <span>→</span></button>
+                  }
+                </article>
+              }
+            </div>
+          }
+        } @else {
+          <div class="content-heading">
+            <div><span class="eyebrow">Disponibilidad</span><h2>Recursos</h2><p>Administra quién o qué puede recibir cada reserva.</p></div>
+            @if (canManage() && activeLocations().length > 0) {
+              <button type="button" (click)="openResourceForm()">Nuevo recurso <b>＋</b></button>
+            }
+          </div>
+
+          @if (activeLocations().length === 0) {
+            <div class="empty"><span>⌖</span><h3>Necesitas una sede activa</h3><p>Cada recurso debe pertenecer a una ubicación activa.</p></div>
+          } @else if (resources().length === 0) {
+            <div class="empty"><span>◇</span><h3>Crea tu primer recurso</h3><p>Puede ser un profesional, cancha, sala, escritorio o equipo.</p>@if (canManage()) {<button type="button" (click)="openResourceForm()">Crear recurso →</button>}</div>
+          } @else {
+            <div class="resource-grid">
+              @for (resource of resources(); track resource.id) {
+                <article class="resource-card">
+                  <div class="resource-icon">{{ resource.name.charAt(0).toUpperCase() }}</div>
+                  <div class="resource-info"><span>{{ resourceTypeName(resource.type) }} · {{ locationName(resource.locationId) }}</span><h3>{{ resource.name }}</h3><p>{{ resource.description || 'Sin descripción' }}</p><small>Capacidad: {{ resource.capacity }}</small></div>
+                  <div class="resource-actions"><button type="button" class="schedule-button" (click)="openSchedule(resource)">Horarios</button>@if (canManage()) {
+                    <button type="button" class="status-toggle" [class.inactive]="!resource.active" [disabled]="resourceActionId() !== null" (click)="toggleResource(resource)">{{ resourceActionId() === resource.id ? 'Guardando…' : (resource.active ? 'Activo' : 'Inactivo') }}</button>
+                  } @else {
+                    <span class="read-status" [class.inactive]="!resource.active">{{ resource.active ? 'Activo' : 'Inactivo' }}</span>
+                  }</div>
+                </article>
+              }
+            </div>
+          }
+        }
+      </div>
+    </section>
+  }
+
+  @if (formOpen()) {
+    <div class="modal-backdrop" role="presentation" (click)="closeForm()">
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="service-form-title" (click)="$event.stopPropagation()">
+        <div class="modal-heading"><div><span class="eyebrow">Nuevo servicio</span><h2 id="service-form-title">Configura la reserva</h2></div><button type="button" aria-label="Cerrar formulario" (click)="closeForm()">×</button></div>
+        @if (formError()) {<div class="notice" role="alert">{{ formError() }}</div>}
+        @if (!assignmentLoading() && unavailableAssignmentIds().length > 0) {
+          <div class="assignment-warning" role="note"><b>{{ unavailableAssignmentIds().length }}</b> asignación anterior ya no está disponible y se retirará al guardar.</div>
+        }
+        <form [formGroup]="serviceForm" (ngSubmit)="submit()">
+          <label><span>Nombre</span><input formControlName="name" placeholder="Ej. Corte clásico">@if (serviceForm.controls.name.touched && serviceForm.controls.name.invalid) {<small>Ingresa un nombre válido.</small>}</label>
+          <label><span>Descripción <small>Opcional</small></span><textarea formControlName="description" placeholder="Describe brevemente el servicio"></textarea></label>
+          <div class="form-row"><label><span>Duración</span><input type="number" formControlName="durationMinutes" min="1" max="1440"></label><label><span>Precio</span><input type="number" formControlName="price" min="0" step="0.01"></label></div>
+          <div class="form-row"><label><span>Moneda</span><select formControlName="currency"><option value="PEN">PEN — Soles</option><option value="USD">USD — Dólares</option><option value="EUR">EUR — Euros</option></select></label><label><span>Modalidad</span><select formControlName="bookingMode"><option value="EXCLUSIVE_RESOURCE">Recurso exclusivo</option><option value="CAPACITY_SESSION">Cupo compartido</option></select></label></div>
+          <label><span>Sede</span><select formControlName="locationId"><option [ngValue]="null" disabled>Selecciona una sede</option>@for (location of activeLocations(); track location.id) {<option [ngValue]="location.id">{{ location.name }} — {{ location.city }}</option>}</select></label>
+          <p class="policy-note">Política inicial: cancelación y reprogramación hasta 2 horas antes, máximo 2 reprogramaciones. Podrás personalizarla después.</p>
+          <div class="modal-actions"><button type="button" class="secondary" (click)="closeForm()">Cancelar</button><button type="submit" [disabled]="saving()">{{ saving() ? 'Creando…' : 'Crear servicio' }} <b>→</b></button></div>
+        </form>
+      </section>
+    </div>
+  }
+
+  @if (resourceFormOpen()) {
+    <div class="modal-backdrop" role="presentation" (click)="closeResourceForm()">
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="resource-form-title" (click)="$event.stopPropagation()">
+        <div class="modal-heading"><div><span class="eyebrow">Nuevo recurso</span><h2 id="resource-form-title">Añade capacidad</h2></div><button type="button" aria-label="Cerrar formulario de recurso" (click)="closeResourceForm()">×</button></div>
+        @if (formError()) {<div class="notice" role="alert">{{ formError() }}</div>}
+        <form [formGroup]="resourceForm" (ngSubmit)="submitResource()">
+          <label><span>Nombre</span><input formControlName="name" placeholder="Ej. Ana Torres o Cancha 1">@if (resourceForm.controls.name.touched && resourceForm.controls.name.invalid) {<small>Ingresa un nombre válido.</small>}</label>
+          <label><span>Descripción <small>Opcional</small></span><textarea formControlName="description" placeholder="Especialidad, características o referencia"></textarea></label>
+          <div class="form-row"><label><span>Tipo de recurso</span><select formControlName="type">@for (type of resourceTypes; track type.code) {<option [value]="type.code">{{ type.name }}</option>}</select></label><label><span>Capacidad</span><input type="number" formControlName="capacity" min="1" max="10000"></label></div>
+          <label><span>Sede</span><select formControlName="locationId"><option [ngValue]="null" disabled>Selecciona una sede</option>@for (location of activeLocations(); track location.id) {<option [ngValue]="location.id">{{ location.name }} — {{ location.city }}</option>}</select></label>
+          <p class="policy-note">La capacidad representa cuántas reservas simultáneas admite este recurso. Para un profesional normalmente es 1.</p>
+          <div class="modal-actions"><button type="button" class="secondary" (click)="closeResourceForm()">Cancelar</button><button type="submit" [disabled]="saving()">{{ saving() ? 'Creando…' : 'Crear recurso' }} <b>→</b></button></div>
+        </form>
+      </section>
+    </div>
+  }
+
+  @if (assignmentService(); as selectedService) {
+    <div class="modal-backdrop" role="presentation" (click)="closeAssignment()">
+      <section class="modal assignment-modal" role="dialog" aria-modal="true" aria-labelledby="assignment-title" (click)="$event.stopPropagation()">
+        <div class="modal-heading"><div><span class="eyebrow">Recursos del servicio</span><h2 id="assignment-title">{{ selectedService.name }}</h2></div><button type="button" aria-label="Cerrar asignación de recursos" (click)="closeAssignment()">×</button></div>
+        @if (formError()) {<div class="notice" role="alert">{{ formError() }}</div>}
+        @if (assignmentLoading()) {
+          <div class="assignment-state" role="status"><span class="spinner"></span><p>Cargando asignaciones actuales…</p></div>
+        } @else if (eligibleResources().length === 0) {
+          <div class="assignment-empty"><span>◇</span><h3>No hay recursos compatibles</h3><p>Crea o activa un recurso en una sede donde se ofrezca este servicio.</p></div>
+        } @else {
+          <p class="assignment-help">Selecciona todos los recursos que pueden atender este servicio. Al guardar se reemplazará la asignación actual.</p>
+          <div class="assignment-list" role="group" aria-label="Recursos disponibles">
+            @for (resource of eligibleResources(); track resource.id) {
+              <label class="assignment-option" [class.selected]="assignedResourceIds().has(resource.id)">
+                <input type="checkbox" [checked]="assignedResourceIds().has(resource.id)" (change)="toggleAssignment(resource.id)">
+                <span class="resource-icon">{{ resource.name.charAt(0).toUpperCase() }}</span>
+                <span class="assignment-resource"><b>{{ resource.name }}</b><small>{{ resourceTypeName(resource.type) }} · {{ locationName(resource.locationId) }}</small></span>
+                <span class="checkmark">✓</span>
+              </label>
+            }
+          </div>
+        }
+        <div class="assignment-summary"><span>Recursos activos seleccionados</span><strong>{{ assignedResourceIds().size }}</strong></div>
+        <div class="modal-actions"><button type="button" class="secondary" (click)="closeAssignment()">Cancelar</button><button type="button" [disabled]="assignmentLoading() || assignmentSaving()" (click)="saveAssignment()">{{ assignmentSaving() ? 'Guardando…' : 'Guardar asignación' }} <b>→</b></button></div>
+      </section>
+    </div>
+  }
+
+
+  @if (scheduleResource(); as selectedResource) {
+    <app-schedule-editor [businessId]="businessId" [resource]="selectedResource" [canManage]="canManage()" (closed)="closeSchedule()" />
+  }
+</main>

@@ -1,0 +1,58 @@
+<div class="schedule-backdrop" role="presentation" (click)="requestClose()">
+  <section class="schedule-modal" role="dialog" aria-modal="true" aria-labelledby="schedule-title" (click)="$event.stopPropagation()">
+    <header>
+      <div><span class="eyebrow">Disponibilidad del recurso</span><h2 id="schedule-title">{{ resource.name }}</h2><p>{{ timezone() || 'Zona horaria de la sede' }}</p></div>
+      <button type="button" aria-label="Cerrar editor de horarios" (click)="requestClose()">×</button>
+    </header>
+
+    <nav aria-label="Secciones de disponibilidad">
+      <button type="button" [class.active]="tab() === 'weekly'" (click)="showTab('weekly')">Horario semanal</button>
+      <button type="button" [class.active]="tab() === 'exceptions'" (click)="showTab('exceptions')">Excepciones <span>{{ exceptions().length }}</span></button>
+    </nav>
+
+    @if (error()) {<div class="schedule-notice error" role="alert">{{ error() }}</div>}
+    @if (success()) {<div class="schedule-notice success" role="status">✓ {{ success() }}</div>}
+
+    @if (loading()) {
+      <div class="schedule-state" role="status"><span class="spinner"></span><p>Cargando disponibilidad…</p></div>
+    } @else if (tab() === 'weekly') {
+      <div class="weekly-intro"><div><h3>Semana recurrente</h3><p>Los horarios usan la hora local de la sede. Los descansos deben quedar dentro de un periodo disponible.</p></div>@if (canManage) {<button type="button" [disabled]="savingSchedule()" (click)="saveWeeklySchedule()">{{ savingSchedule() ? 'Guardando…' : 'Guardar horario' }}</button>}</div>
+      <div class="week-list">
+        @for (day of weekDays; track day.code) {
+          <article class="day-row">
+            <div class="day-name"><strong>{{ day.shortName }}</strong><span>{{ day.name }}</span></div>
+            <div class="day-rules">
+              @if (rulesFor(day.code, 'AVAILABLE').length === 0) {<span class="closed-day">Sin disponibilidad</span>}
+              @for (rule of rulesFor(day.code, 'AVAILABLE'); track rule.key) {
+                <div class="time-rule available"><span>Disponible</span><input type="time" aria-label="Inicio disponible {{ day.name }}" [value]="rule.startTime" [disabled]="!canManage" (change)="updateRule(rule.key, 'startTime', $any($event.target).value)"><i>—</i><input type="time" aria-label="Fin disponible {{ day.name }}" [value]="rule.endTime" [disabled]="!canManage" (change)="updateRule(rule.key, 'endTime', $any($event.target).value)">@if (canManage) {<button type="button" aria-label="Eliminar periodo disponible {{ day.name }}" (click)="removeRule(rule.key)">×</button>}</div>
+              }
+              @for (rule of rulesFor(day.code, 'BREAK'); track rule.key) {
+                <div class="time-rule pause"><span>Descanso</span><input type="time" aria-label="Inicio descanso {{ day.name }}" [value]="rule.startTime" [disabled]="!canManage" (change)="updateRule(rule.key, 'startTime', $any($event.target).value)"><i>—</i><input type="time" aria-label="Fin descanso {{ day.name }}" [value]="rule.endTime" [disabled]="!canManage" (change)="updateRule(rule.key, 'endTime', $any($event.target).value)">@if (canManage) {<button type="button" aria-label="Eliminar descanso {{ day.name }}" (click)="removeRule(rule.key)">×</button>}</div>
+              }
+              @if (canManage) {<div class="rule-actions"><button type="button" (click)="addRule(day.code, 'AVAILABLE')">＋ Disponibilidad</button><button type="button" (click)="addRule(day.code, 'BREAK')">＋ Descanso</button></div>}
+            </div>
+          </article>
+        }
+      </div>
+    } @else {
+      <div class="exception-layout">
+        @if (canManage) {
+          <form [formGroup]="exceptionForm" (ngSubmit)="saveException()">
+            <div><span class="eyebrow">Nueva excepción</span><h3>Cambia una fecha</h3><p>Un cierre u horario especial reemplaza la disponibilidad recurrente de ese día.</p></div>
+            <label><span>Fecha</span><input type="date" formControlName="date" [min]="today" [max]="rangeEnd"></label>
+            <label><span>Tipo</span><select formControlName="exceptionType"><option value="CLOSED">Día cerrado</option><option value="CUSTOM_HOURS">Horario especial</option></select></label>
+            @if (exceptionForm.controls.exceptionType.value === 'CUSTOM_HOURS') {<div class="exception-times"><label><span>Desde</span><input type="time" formControlName="startTime"></label><label><span>Hasta</span><input type="time" formControlName="endTime"></label></div>}
+            <label><span>Motivo <small>Opcional</small></span><input formControlName="reason" maxlength="250" placeholder="Ej. Feriado o evento privado"></label>
+            <button type="submit" [disabled]="savingException()">{{ savingException() ? 'Guardando…' : 'Guardar excepción' }} <b>→</b></button>
+          </form>
+        }
+        <section class="exception-list"><div class="list-heading"><h3>Próximas excepciones</h3><span>{{ exceptions().length }}</span></div>
+          @if (exceptions().length === 0) {<div class="exception-empty"><span>◇</span><p>No hay cambios especiales durante los próximos 365 días.</p></div>}
+          @for (exception of exceptions(); track exception.id) {
+            <article><div class="exception-date"><strong>{{ formatDate(exception.exceptionDate) }}</strong><span>{{ exceptionTypeName(exception.exceptionType) }}</span></div>@if (exception.exceptionType === 'CUSTOM_HOURS') {<b>{{ shortTime(exception.startTime!) }}–{{ shortTime(exception.endTime!) }}</b>}<p>{{ exception.reason || 'Sin motivo' }}</p>@if (canManage) {<div><button type="button" (click)="editException(exception)">Editar</button><button type="button" class="danger" [disabled]="deletingDate() !== null" (click)="deleteException(exception)">{{ deletingDate() === exception.exceptionDate ? 'Eliminando…' : 'Eliminar' }}</button></div>}</article>
+          }
+        </section>
+      </div>
+    }
+  </section>
+</div>

@@ -1,0 +1,14 @@
+.resource-grid { margin-top: 38px; display: grid; gap: 12px; }
+.resource-card { min-height: 112px; padding: 18px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; align-items: center; border: 1px solid #dfe4de; border-radius: 17px; background: #fdfdfc; }
+.resource-icon { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 14px; background: #e8f1ec; color: var(--forest); font: 500 27px var(--font-serif); }
+.resource-info > span { color: var(--coral); font-size: 8px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; }
+.resource-info h3 { margin: 5px 0 3px; font: 500 23px var(--font-serif); }
+.resource-info p { margin: 0; color: var(--muted); font-size: 10px; }
+.resource-info small { margin-top: 7px; display: block; color: var(--forest); font-size: 9px; font-weight: 800; }
+.status-toggle, .read-status { min-width: 78px; padding: 8px 10px; border: 0; border-radius: 99px; background: #e8f3ed; color: var(--forest); font-size: 8px; font-weight: 800; text-align: center; text-transform: uppercase; }
+.status-toggle { cursor: pointer; }
+.status-toggle.inactive, .read-status.inactive { background: #f3ece9; color: #946050; }
+.status-toggle:disabled { cursor: wait; opacity: .65; }
+.resource-actions { display: grid; justify-items: stretch; gap: 7px; }
+.schedule-button { min-width: 78px; padding: 8px 10px; border: 1px solid #cad7d0; border-radius: 99px; background: white; color: var(--forest); font-size: 8px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
+@media (max-width: 560px) { .resource-card { grid-template-columns: auto minmax(0, 1fr); }.resource-actions { grid-column: 1 / -1; width: 100%; }.status-toggle,.read-status,.schedule-button { width: 100%; } }

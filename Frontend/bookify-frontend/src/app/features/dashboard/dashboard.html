@@ -5,12 +5,29 @@
   </header>
   <section>
     <span class="eyebrow">Tu espacio Bookify</span>
-    <h1>Todo listo para comenzar.</h1>
-    <p>La sesión está conectada correctamente. El siguiente paso será incorporar aquí tus reservas y la configuración de tu negocio.</p>
-    <div class="cards">
-      <article><span>01</span><h2>Explorar servicios</h2><p>Encuentra disponibilidad real cerca de ti.</p></article>
-      <article><span>02</span><h2>Mis reservas</h2><p>Consulta, cancela o reprograma tus citas.</p></article>
-      <article><span>03</span><h2>Crear un negocio</h2><p>Configura ubicaciones, servicios y horarios.</p></article>
-    </div>
+    <h1>Todo en su lugar.</h1>
+    <p>Administra tus reservas y negocios desde un espacio diseñado para avanzar sin complicaciones.</p>
+
+    @if (loading()) {
+      <div class="loading-state" role="status"><span></span><p>Cargando tu espacio…</p></div>
+    } @else if (loadError()) {
+      <div class="empty-state"><span>!</span><h2>No pudimos cargar tus negocios</h2><p>Comprueba la conexión e inténtalo nuevamente.</p><button type="button" (click)="loadBusinesses()">Volver a intentar</button></div>
+    } @else {
+      <div class="section-title"><h2>Mis negocios</h2><a routerLink="/negocio/nuevo">Nuevo negocio <b>＋</b></a></div>
+      @if (businesses().length > 0) {
+        <div class="business-grid">
+          @for (business of businesses(); track business.id) {
+            <article class="business-card"><div class="business-letter">{{ business.name.charAt(0).toUpperCase() }}</div><span>{{ categoryName(business.categoryCode) }}</span><h3>{{ business.name }}</h3><p>Tu rol: {{ business.membershipRole === 'OWNER' ? 'Propietario' : business.membershipRole }}</p><a class="manage-link" [routerLink]="['/negocios', business.id]">Administrar <b>→</b></a></article>
+          }
+        </div>
+      } @else {
+        <div class="empty-state business-empty"><span>✦</span><h2>Convierte tu negocio en reservable</h2><p>Crea tu perfil, primera sede y espacio de gestión en unos minutos.</p><a routerLink="/negocio/nuevo">Configurar mi negocio <b>→</b></a></div>
+      }
+
+      <div class="cards">
+        <article><span>01</span><h2>Explorar servicios</h2><p>Encuentra disponibilidad real cerca de ti.</p></article>
+        <article><span>02</span><h2>Mis reservas</h2><p>Consulta, cancela o reprograma tus citas.</p></article>
+      </div>
+    }
   </section>
 </main>

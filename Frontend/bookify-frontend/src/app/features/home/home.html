@@ -24,12 +24,12 @@
         Servicios increíbles cerca de ti, con disponibilidad real y reserva inmediata.
       </p>
 
-      <form class="search-card" aria-label="Buscar servicios" (submit)="$event.preventDefault()">
+      <form class="search-card" aria-label="Buscar servicios" (submit)="$event.preventDefault(); explore(query.value)">
         <label>
           <span>¿Qué necesitas?</span>
           <div class="field-line">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.3-4.3m2.3-5.2a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z"/></svg>
-            <input type="search" placeholder="Masaje, cancha, sala..." />
+            <input #query type="search" placeholder="Masaje, cancha, sala..." />
           </div>
         </label>
         <span class="divider" aria-hidden="true"></span>
@@ -37,7 +37,7 @@
           <span>¿Dónde?</span>
           <div class="field-line">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
-            <input type="text" placeholder="Lima, Miraflores..." />
+            <input type="text" value="Lima metropolitana" readonly aria-label="Zona inicial de búsqueda" />
           </div>
         </label>
         <button class="search-button" type="submit" aria-label="Buscar">Buscar</button>
@@ -72,11 +72,11 @@
 
       <div class="category-grid">
         @for (category of categories; track category.name) {
-          <article class="category-card">
+          <a class="category-card" [routerLink]="['/explorar']" [queryParams]="{ category: category.code }">
             <span class="category-icon" aria-hidden="true">{{ category.icon }}</span>
             <div><h3>{{ category.name }}</h3><p>{{ category.detail }}</p></div>
             <span class="arrow" aria-hidden="true">↗</span>
-          </article>
+          </a>
         }
       </div>
     </section>
